@@ -1,21 +1,20 @@
 # %%
+import numpy as np
 import gym
 from gym.utils import seeding
 import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
 
-from src.core.environment import backtest_from_to
+from src.environment import backtest_from_to
 
 # %%
-class PortfolioEnvironment(gym.Env):
-    def __init__(self, data_generator, starting_value, rebalancing, benchmark_wgts, split_weight=10, lookback_win=6):
+class TradingEnvironment(gym.Env):
+    def __init__(self, data_feed, starting_value, split_weight=10, lookback_win=6):
         """ Initialises the class """
 
-        self.data_generator = data_generator
+        self.data_feed = data_feed
         self.starting_value = starting_value
-        self.rebalancing = rebalancing
-        self.benchmark_wgts = benchmark_wgts
         self.weight_increments = 1/split_weight
         self.lookback_win = lookback_win
 
@@ -27,10 +26,10 @@ class PortfolioEnvironment(gym.Env):
     def reset(self):
         """ Reset the environment to the initial state """
 
-        if isinstance(self.data_generator, pd.DataFrame):
-            self.data = self.data_generator
+        if isinstance(self.data_feed.data, pd.DataFrame):
+            self.data = self.data_feed.data
         else:
-            self.data = self.data_generator()
+            self.data = self.data_feed().data
 
         self.time_step = 0
         self.reward = 0
