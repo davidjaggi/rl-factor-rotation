@@ -26,20 +26,43 @@ class BaseEnvironment(gym.Env):
         self.action_space = action_space
 
         self.initial_balance = self.config["portfolio_config"]["initial_balance"]
-        # initialize reward
-        self.reward = 0
-        self.initial = True
-        self.trades = 0
 
+        self.initial = True
         # initialize state
         self.state = self._initiate_state()
 
+        # initialize reward
+        self.reward = 0
+        self.coost = 0
+        self.trades = 0
+        self.episode = 0
+
+        # memorize changes
+        self.asset_memory = [self.initial_balance]
+        self.rewards_memory = []
+        self.actions_memory = []
+        self.data
         self.reset()
         self._seed()
 
     def reset(self):
         # initialize state
         self.state = self._initiate_state()
+
+        if self.initial:
+            self.asset_memory = [self.initial_balance]
+        else:
+            previous_total_asset = self.previous_state[0] + sum(
+                np.array(self.state[1 : (self.data_feed.num_tickers + 1)])
+                * np.array(
+                    self.previous_state[
+                        (self.data_feed.num_tickers + 1) : (
+                            self.data_feed.num_tickers * 2 + 1
+                        )
+                    ]
+                )
+            )
+            self.asset_memory = [previous_total_asset]
 
         self.init_balance = self.config["portfolio_config"]["initial_balance"]
         self.reward = 0
