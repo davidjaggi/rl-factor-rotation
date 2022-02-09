@@ -34,7 +34,7 @@ for i in range(50):
     random.seed(a=seed)
 
     # define the datafeed
-    data_feed = BaseDataFeed(["AAPL", "MSFT"], "2020-01-01", "2020-12-31")
+    data_feed = BaseDataFeed(["AAPL", "MSFT","AAPL"], "2020-01-01", "2020-12-31")
 
     # define the config
     env_config = {}
@@ -43,18 +43,11 @@ for i in range(50):
     # define the env
     base_env = BaseEnvironment(data_feed, config=env_config, action_space=action_space)
 
-    # for i in range(10):
-    #     t = time.time()
-    #     broker.simulate_algo(broker.benchmark_algo)
-    #     broker.benchmark_algo.plot_schedule(broker.trade_logs['benchmark_algo'])
-    #     elapsed = time.time() - t
-    #     print(elapsed)
-    """
-    for k in range(len(base_env.broker.rl_algo.algo_events) + 1):
-        base_env.step(action=np.array([0.05]))
-        if base_env.done:
-            print(base_env.broker.benchmark_algo.bmk_vwap, base_env.broker.rl_algo.rl_vwap)
+    for k in range(100):
+        base_env.step(actions=np.array([0.05]))
+        if base_env.terminal:
             print(base_env.reward)
             base_env.reset()
-    """
+# %%
+
 # %%
