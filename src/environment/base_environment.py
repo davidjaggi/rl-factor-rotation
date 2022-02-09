@@ -25,7 +25,7 @@ class BaseEnvironment(gym.Env):
         self.sell_cost_pct = 0.005
         self.data_feed = data_feed
         self.data = self.data_feed.data
-        self.config = BASE_CONFIG | config
+        self.config = {**BASE_CONFIG, **config}
         self.action_space = action_space
         self.observation_space = self.build_observation_space()
 
