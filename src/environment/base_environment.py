@@ -27,6 +27,7 @@ class BaseEnvironment(gym.Env):
         self.data = self.data_feed.data
         self.config = BASE_CONFIG | config
         self.action_space = action_space
+        self.observation_space = self.build_observation_space()
 
         self.initial_balance = self.config["portfolio_config"]["initial_balance"]
 
