@@ -19,7 +19,7 @@ BASE_CONFIG = {
 class BaseEnvironment(gym.Env):
     def __init__(self, data_feed, config, action_space):
         """Initialises the class"""
-        self.time = 0
+        self.day = 0
         self.hmax = 100
         self.buy_cost_pct = 0.005
         self.sell_cost_pct = 0.005
@@ -33,6 +33,7 @@ class BaseEnvironment(gym.Env):
 
         self.initial = True
         self.terminal = False
+        self.data = self.df.loc[self.day, :]
         # initialize state
         self.state = self._initiate_state()
 
@@ -139,7 +140,7 @@ class BaseEnvironment(gym.Env):
         return buy_num_shares
 
     def step(self, actions):
-        self.terminal = self.time >= len(self.data.index.unique()) - 1
+        self.terminal = self.day >= len(self.data.index.unique()) - 1
         if self.terminal:
             # print(f"Episode: {self.episode}")
             if self.make_plots:
@@ -184,7 +185,7 @@ class BaseEnvironment(gym.Env):
             df_rewards.columns = ["account_rewards"]
             df_rewards["date"] = self.date_memory[:-1]
             if self.episode % self.print_verbosity == 0:
-                print(f"day: {self.time}, episode: {self.episode}")
+                print(f"day: {self.day}, episode: {self.episode}")
                 print(f"begin_total_asset: {self.asset_memory[0]:0.2f}")
                 print(f"end_total_asset: {end_total_asset:0.2f}")
                 print(f"total_reward: {tot_reward:0.2f}")
@@ -267,8 +268,8 @@ class BaseEnvironment(gym.Env):
             self.actions_memory.append(actions)
 
             # state: s -> s+1
-            self.time += 1
-            self.df = self.data.loc[self.time, :]
+            self.day += 1
+            self.df = self.data.loc[self.day, :]
             self.state = self._update_state()
 
             end_total_asset = self.state[0] + sum(
@@ -300,7 +301,7 @@ class BaseEnvironment(gym.Env):
                 # for multiple stock
                 state = (
                     [self.initial_balance]
-                    + self.df.close.values.tolist()
+                    + self.data.close.values.tolist()
                     + [0] * self.data_feed.num_tickers
                 )
             else:

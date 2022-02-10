@@ -23,6 +23,16 @@ class TestBaseEnvironment(unittest.TestCase):
             self.data_feed, config=self.config, action_space=self.action_space
         )
 
+        # self.assertFalse(env.initial, "Initial state is not False") need more information
+        self.assertFalse(env.terminal, "Terminal state is not False")
+        self.assertEqual(env.initial_balance, 10000, "Initial balance is not 10000")
+        self.assertEqual(env.day, 0, "Day is not 0")
+        self.assertEqual(env.reward, 0, "Reward is not 0")
+        self.assertEqual(env.cost, 0, "Cost is not 0")
+        self.assertEqual(env.trades, 0, "Trades is not 0")
+        self.assertEqual(env.episode, 0, "Episode is not 0")
+        print(env.data)
+
     def test_unique_tickers(self):
         env = BaseEnvironment(
             self.data_feed, config=self.config, action_space=self.action_space
