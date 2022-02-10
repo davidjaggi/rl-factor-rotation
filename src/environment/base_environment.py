@@ -24,7 +24,7 @@ class BaseEnvironment(gym.Env):
         self.buy_cost_pct = 0.005
         self.sell_cost_pct = 0.005
         self.data_feed = data_feed
-        self.data = self.data_feed.data
+        self.df = self.data_feed.df
         self.config = {**BASE_CONFIG, **config}
         self.action_space = action_space
         self.observation_space = self.build_observation_space()
@@ -296,11 +296,11 @@ class BaseEnvironment(gym.Env):
     def _initiate_state(self):
         if self.initial:
             # For Initial State
-            if len(self.data_feed.data.ticker.unique()) > 1:
+            if len(self.data_feed.df.ticker.unique()) > 1:
                 # for multiple stock
                 state = (
                     [self.initial_balance]
-                    + self.data.close.values.tolist()
+                    + self.df.close.values.tolist()
                     + [0] * self.data_feed.num_tickers
                 )
             else:
@@ -368,10 +368,10 @@ class BaseEnvironment(gym.Env):
         return state
 
     def _get_date(self):
-        if len(self.data.ticker.unique()) > 1:
-            date = self.data.date.unique()[0]
+        if len(self.df.ticker.unique()) > 1:
+            date = self.df.date.unique()[0]
         else:
-            date = self.data.date
+            date = self.df.date
         return date
 
     def save_asset_memory(self):

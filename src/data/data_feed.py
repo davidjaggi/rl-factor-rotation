@@ -10,7 +10,7 @@ class BaseDataFeed(object):
         self.num_tickers = len(tickers)
         self.start_date = start_date
         self.end_date = end_date
-        self.data = self.get_data()
+        self.df = self.get_data()
 
     def get_data(self):
         # get data from public sources
@@ -25,7 +25,7 @@ class BaseDataFeed(object):
 
     def _preprocess(self, price_data):
         # fill with all business days and include nan's where no data is available
-        return (
+        price_data = (
             price_data.stack()
             .reset_index()
             .rename(
@@ -41,6 +41,9 @@ class BaseDataFeed(object):
                 }
             )
         )
+        # close should be similar to adjusted close
+        price_data["close"] = price_data["adj_close"]
+        return price_data
 
 
 # %%
