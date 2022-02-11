@@ -1,6 +1,7 @@
 # %%
 import unittest
 import numpy as np
+import pandas as pd
 from src.data.data_feed import BaseDataFeed
 
 
@@ -23,5 +24,6 @@ class TestBaseDataFeed(unittest.TestCase):
         self.assertIn("close", self.df.columns, "Close column is not in dataframe")
 
     def test_index(self):
-        pass
-        # print(self.df.head())
+        print(self.df.head())
+        # get all entries from multilevel index at 2020-01-01
+        print(self.df.loc[("2020-01-02",)])
