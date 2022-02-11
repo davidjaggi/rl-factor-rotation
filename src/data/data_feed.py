@@ -43,6 +43,13 @@ class BaseDataFeed(object):
         )
         # close should be similar to adjusted close
         price_data["close"] = price_data["adj_close"]
+        price_data["date"] = price_data.date.apply(lambda x: x.strftime("%Y-%m-%d"))
+        price_data = price_data.dropna()
+        price_data = price_data.reset_index(drop=True)
+        print("Shape of DataFrame: ", price_data.shape)
+
+        price_data = price_data.sort_values(by=["date", "ticker"])
+        price_data.set_index(["date", "ticker"], inplace=True)
         return price_data
 
 

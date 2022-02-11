@@ -1,5 +1,6 @@
 # %%
 import unittest
+import numpy as np
 from src.data.data_feed import BaseDataFeed
 
 
@@ -18,7 +19,9 @@ class TestBaseDataFeed(unittest.TestCase):
 
     def test_column_name(self):
         self.assertIn("date", self.df.columns, "Date column is not in dataframe")
+        self.assertIn("ticker", self.df.columns, "Ticker column is not in dataframe")
+        self.assertIn("close", self.df.columns, "Close column is not in dataframe")
 
-    def test_date_index(self):
-        df_index = self.df.index
-        df_date = self.df.date
+    def test_index(self):
+        pass
+        # print(self.df.head())

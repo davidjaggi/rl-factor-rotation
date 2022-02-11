@@ -301,14 +301,14 @@ class BaseEnvironment(gym.Env):
                 # for multiple stock
                 state = (
                     [self.initial_balance]
-                    + self.data.close.values.tolist()
+                    + self.df.close.values.tolist()
                     + [0] * self.data_feed.num_tickers
                 )
             else:
                 # for single stock
                 state = (
                     [self.initial_balance]
-                    + [self.data.close]
+                    + [self.df.close]
                     + [0] * self.data_feed.num_tickers
                 )
         else:

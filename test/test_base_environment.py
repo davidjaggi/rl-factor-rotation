@@ -31,6 +31,7 @@ class TestBaseEnvironment(unittest.TestCase):
         self.assertEqual(env.cost, 0, "Cost is not 0")
         self.assertEqual(env.trades, 0, "Trades is not 0")
         self.assertEqual(env.episode, 0, "Episode is not 0")
+        self.assertIsInstance(env.data.date, np.datetime64, "Date is not np.datetime64")
         print(env.data)
 
     def test_unique_tickers(self):
