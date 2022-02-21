@@ -1,12 +1,12 @@
 # %%
 import numpy as np
 from src.data.rebalancing_schedule import PeriodicSchedule
-from src.data.data_feed import CSVDataFeed
+from src.data.feed import CSVDataFeed
 from src.env.base_env import BaseEnv
 import matplotlib.pyplot as plt
 
 # %%
-feed = CSVDataFeed(file_name="example_data.csv")
+feed = CSVDataFeed(file_name="/workspaces/rl-factor-rotation/src/env/example_data.csv")
 
 env_config = {
     "initial_balance": 10000,
@@ -32,3 +32,5 @@ while not done:
     obs, rew, done, _ = env.step(action)
 env.plot_current_performance()
 plt.show()
+
+# %%
