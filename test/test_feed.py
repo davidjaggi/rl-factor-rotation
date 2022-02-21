@@ -2,11 +2,22 @@
 import unittest
 import numpy as np
 import pandas as pd
-from src.data.data_feed import BaseDataFeed
+from src.data.feed import Feed
 
 
-class TestBaseDataFeed(unittest.TestCase):
+class TestFeed(unittest.TestCase):
     def setUp(self):
+        self.feed = Feed(
+            start_date="2019-01-01", end_date="2019-01-02", price_field_name="Close"
+        )
+
+    def test_attribute(self):
+        assert self.feed.start_date == "2019-01-01"
+        assert self.feed.end_date == "2019-01-02"
+        assert self.feed.price_field_name == "Close"
+
+        """
+        self.feed = Feed(start_date = )
         self.tickers = ["AAPL", "MSFT"]
         self.start_date = "2020-01-01"
         self.end_date = "2020-12-31"
@@ -27,3 +38,4 @@ class TestBaseDataFeed(unittest.TestCase):
         print(self.df.head())
         # get all entries from multilevel index at 2020-01-01
         print(self.df.loc[("2020-01-02",)])
+"""
