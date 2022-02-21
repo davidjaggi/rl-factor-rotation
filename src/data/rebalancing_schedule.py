@@ -16,18 +16,32 @@ class RebalancingSchedule:
         self.end_date = end_date
 
     def remove_dates_from_schedule(self, remove_dates):
-        self.rebalancing_dates = [x for x in self.rebalancing_dates if x not in remove_dates]
+        self.rebalancing_dates = [
+            x for x in self.rebalancing_dates if x not in remove_dates
+        ]
         return self.rebalancing_dates
 
     def add_dates_to_schedule(self, add_dates):
-        pass
+        # add dates to list and sort
+        self.rebalancing_dates += add_dates
+        self.rebalancing_dates.sort()
+        return self.rebalancing_dates
 
     def schedule(self):
         raise NotImplementedError
 
 
 class PeriodicSchedule(RebalancingSchedule):
-    def __init__(self, frequency, holidays=BDay, skip_day=None, skip_month=None, skip_year=None, *args, **kwargs):
+    def __init__(
+        self,
+        frequency,
+        holidays=BDay,
+        skip_day=None,
+        skip_month=None,
+        skip_year=None,
+        *args,
+        **kwargs
+    ):
         self.frequency = frequency
         self.holidays = holidays
         self.skip_day = skip_day
@@ -37,13 +51,13 @@ class PeriodicSchedule(RebalancingSchedule):
 
     def schedule(self):
         if self.start_date is None or self.end_date is None:
-            raise ValueError('Start and End Date have to be set!')
+            raise ValueError("Start and End Date have to be set!")
 
         # get all dates first
         pd_dates = pd.date_range(self.start_date, self.end_date, freq=self.frequency)
 
         # add another business day (IS THIS WORKING?)
-        pd_dates = pd_dates.map(lambda x: x + 0*self.holidays())
+        pd_dates = pd_dates.map(lambda x: x + 0 * self.holidays())
 
         # skip whenever defined
         pd_dates = pd_dates.to_list()
