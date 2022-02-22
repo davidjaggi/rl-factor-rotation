@@ -1,13 +1,12 @@
 from abc import ABC
-
-import numpy as np
-import gym
-from gym.utils import seeding
 from datetime import timedelta
+
+import gym
+import numpy as np
 import pandas as pd
+from gym.utils import seeding
 
 from src.data.rebalancing_schedule import RebalancingSchedule
-
 
 BASE_CONFIG = {
     "initial_balance": 10000,
@@ -250,7 +249,7 @@ if __name__ == "__main__":
     from src.data.data_feed import CSVDataFeed
     import matplotlib.pyplot as plt
 
-    feed = CSVDataFeed(file_name="example_data.csv")
+    feed = CSVDataFeed(file_name="../../data/example_data.csv")
 
     env_config = {
         "initial_balance": 10000,

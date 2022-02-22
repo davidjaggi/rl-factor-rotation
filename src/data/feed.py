@@ -192,3 +192,7 @@ class StooqDataFeed(BaseDataFeed):
     # inherit from BaseDataFeed
     def __init__(self, tickers, start_date, end_date):
         super().__init__(tickers, start_date, end_date)
+
+
+if __name__ == "__main__":
+    feed = CSVDataFeed()
