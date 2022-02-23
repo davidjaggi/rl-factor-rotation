@@ -1,12 +1,15 @@
 # %%
 import unittest
+
 from src.data.feed import CSVDataFeed
+from src.utils.load_path import load_data_path
 
 
 class TestCSVDataFeed(unittest.TestCase):
     def setUp(self):
+        self.data_path = load_data_path()
         self.feed = CSVDataFeed(
-            file_name="/workspaces/rl-factor-rotation/src/env/example_data.csv"
+            file_name=self.data_path + "/example_data.csv"
         )
 
     def test_class(self):
@@ -14,7 +17,7 @@ class TestCSVDataFeed(unittest.TestCase):
 
     def test_data(self):
         df = self.feed.data
-        assert df.__class__.__name__ == "DataFrame"
+        assert df.__class__.__name__ == "dict"
 
     def test_num_assets(self):
         assert self.feed.num_assets == 2
