@@ -135,14 +135,16 @@ class CSVDataFeed(Feed):
 
 
 # %%
-class BaseDataFeed(object):
+class YahooDataFeed(Feed):
     # initialize datafeed
-    def __init__(self, tickers, start_date, end_date):
+    def __init__(self, tickers, price_field_name="Close", *args, **kwargs):
+        super(YahooDataFeed, self).__init__(
+            price_field_name=price_field_name, *args, **kwargs
+        )
         self.tickers = tickers
-        self.num_tickers = len(tickers)
-        self.start_date = start_date
-        self.end_date = end_date
-        self.df = self.get_data()
+        self.data = []
+        self.reset_feed(self.start_date, self.end_date)
+        self.num_assets = len(self.data.keys())
 
     def get_data(self):
         # get data from public sources
@@ -188,11 +190,12 @@ class BaseDataFeed(object):
 
 
 # %%
-class StooqDataFeed(BaseDataFeed):
+class StooqDataFeed(Feed):
     # inherit from BaseDataFeed
     def __init__(self, tickers, start_date, end_date):
         super().__init__(tickers, start_date, end_date)
 
 
+# %%
 if __name__ == "__main__":
-    feed = CSVDataFeed()
+    feed = CSVDataFeed(file_name="example_data.csv")
