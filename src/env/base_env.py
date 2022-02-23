@@ -1,13 +1,12 @@
 from abc import ABC
-
-import numpy as np
-import gym
-from gym.utils import seeding
 from datetime import timedelta
+
+import gym
+import numpy as np
 import pandas as pd
+from gym.utils import seeding
 
 from src.data.rebalancing_schedule import RebalancingSchedule
-
 
 BASE_CONFIG = {
     "initial_balance": 10000,
@@ -18,17 +17,15 @@ BASE_CONFIG = {
     "busday_offset_start": 250,
     "cost_pct": 0.0005,
     "reward_scaling": 1,
-    "obs_price_hist": 5
+    "obs_price_hist": 5,
 }
 
 
-class TradingEnv(gym.Env, ABC):
-    def __init__(self,
-                 data_feed,
-                 config={},
-                 rebalance_schedule=None,
-                 indicator_pipeline=None):
-        """ Initialises the class """
+class BaseEnv(gym.Env, ABC):
+    def __init__(
+        self, data_feed, config={}, rebalance_schedule=None, indicator_pipeline=None
+    ):
+        """Initialises the class"""
 
         self.data_feed = data_feed
         self.rebalance_schedule = rebalance_schedule
@@ -52,15 +49,23 @@ class TradingEnv(gym.Env, ABC):
             self.start_date = self.config["start_date"]
             self.end_date = self.config["end_date"]
 
-        self.data_feed.reset_feed(start_dt=(pd.to_datetime(self.start_date) -
-                                             timedelta(days=self.config["busday_offset_start"])).strftime("%Y-%m-%d"),
-                                  end_dt=self.end_date)
+        self.data_feed.reset_feed(
+            start_dt=(
+                pd.to_datetime(self.start_date)
+                - timedelta(days=self.config["busday_offset_start"])
+            ).strftime("%Y-%m-%d"),
+            end_dt=self.end_date,
+        )
         if self.rebalance_schedule is None:
-            self.rebalance_periods = [idx for idx in self.data_feed.get_data_idx()
-                                            if idx >= pd.to_datetime(self.start_date)]
+            self.rebalance_periods = [
+                idx
+                for idx in self.data_feed.get_data_idx()
+                if idx >= pd.to_datetime(self.start_date)
+            ]
         if isinstance(self.rebalance_schedule, RebalancingSchedule):
-            self.rebalance_schedule.set_start_and_end(start_date=self.start_date,
-                                                       end_date=self.end_date)
+            self.rebalance_schedule.set_start_and_end(
+                start_date=self.start_date, end_date=self.end_date
+            )
             schedule = self.rebalance_schedule.schedule()
             self.rebalance_periods = schedule
 
@@ -106,26 +111,36 @@ class TradingEnv(gym.Env, ABC):
 
     def step(self, actions):
 
-        assert self.terminal is False, 'reset() must be called before step()'
+        assert self.terminal is False, "reset() must be called before step()"
 
-        self.current_prices = self.data_feed.get_price_data(end_dt=self.rebalance_periods[self.day+1],
-                                                            start_dt=self.rebalance_periods[self.day])
+        self.current_prices = self.data_feed.get_price_data(
+            end_dt=self.rebalance_periods[self.day + 1],
+            start_dt=self.rebalance_periods[self.day],
+        )
 
         # transform actions to units
         self.actions_memory.append(actions)
         actions = self._convert_action(actions)
         wgts = self.actions_to_weights(actions)
-        units, costs = self.weights_to_shares(wgts, self.asset_memory[-1], self.current_holdings)
+        units, costs = self.weights_to_shares(
+            wgts, self.asset_memory[-1], self.current_holdings
+        )
         self.current_holdings = units
-        self.current_ptf_values = np.sum(units * self.current_prices.iloc[1:, :].to_numpy(), axis=1)
+        self.current_ptf_values = np.sum(
+            units * self.current_prices.iloc[1:, :].to_numpy(), axis=1
+        )
         self.asset_memory.extend(self.current_ptf_values.tolist())
 
         # do the same with a benchmark if there is one...
         if self.config["benchmark_type"] is not None:
             wgts_bmk = self._benchmark_weights()
-            units_bmk, costs_bmk = self.weights_to_shares(wgts_bmk, self.bmk_memory[-1], self.current_holdings_bmk)
+            units_bmk, costs_bmk = self.weights_to_shares(
+                wgts_bmk, self.bmk_memory[-1], self.current_holdings_bmk
+            )
             self.current_holdings_bmk = units_bmk
-            self.current_ptf_values_bmk = np.sum(units_bmk * self.current_prices.iloc[1:, :].to_numpy(), axis=1)
+            self.current_ptf_values_bmk = np.sum(
+                units_bmk * self.current_prices.iloc[1:, :].to_numpy(), axis=1
+            )
             self.bmk_memory.extend(self.current_ptf_values_bmk.tolist())
 
         self.date_memory.extend([dt for dt in self.current_prices.index[1:]])
@@ -138,7 +153,7 @@ class TradingEnv(gym.Env, ABC):
         # state: s -> s+1
         self.day += 1
         self.state = self.build_observation(self.rebalance_periods[self.day])
-        self.terminal = self.day >= len(self.rebalance_periods)-1
+        self.terminal = self.day >= len(self.rebalance_periods) - 1
 
         return self.state, self.reward, self.terminal, {}
 
@@ -147,18 +162,24 @@ class TradingEnv(gym.Env, ABC):
         return action
 
     def actions_to_weights(self, actions):
-        """ Converts actions to portfolio weights """
+        """Converts actions to portfolio weights"""
 
-        actions = (actions - self.action_space.low[0]) / (self.action_space.high[0] - self.action_space.low[0])
+        actions = (actions - self.action_space.low[0]) / (
+            self.action_space.high[0] - self.action_space.low[0]
+        )
         wgts = actions / np.sum(actions)
         return wgts
 
     def weights_to_shares(self, weights, current_val, current_holding):
-        """ Logic for transforming raw actions into number of shares for each asset """
+        """Logic for transforming raw actions into number of shares for each asset"""
 
-        asset_values = (weights * current_val)
+        asset_values = weights * current_val
         units_gross = asset_values / self.current_prices.iloc[0, :].to_numpy()
-        costs = np.abs(units_gross - current_holding) * self.current_prices.iloc[0, :].to_numpy() * self.cost_pct
+        costs = (
+            np.abs(units_gross - current_holding)
+            * self.current_prices.iloc[0, :].to_numpy()
+            * self.cost_pct
+        )
         units_net = (asset_values - costs) / self.current_prices.iloc[0, :].to_numpy()
         return units_net, np.sum(costs)
 
@@ -178,17 +199,21 @@ class TradingEnv(gym.Env, ABC):
     @property
     def bmk_performance(self):
         if self.config["benchmark_type"] is not None:
-            df = pd.DataFrame(list(zip(self.date_memory, self.bmk_memory)),
-                              columns=['Date', 'Bmk_Value'])
+            df = pd.DataFrame(
+                list(zip(self.date_memory, self.bmk_memory)),
+                columns=["Date", "Bmk_Value"],
+            )
             df = df.set_index("Date")
         else:
-            df = pd.DataFrame(columns=['Bmk_Value'])
+            df = pd.DataFrame(columns=["Bmk_Value"])
         return df
 
     @property
     def ptf_performance(self):
-        df = pd.DataFrame(list(zip(self.date_memory, self.asset_memory)),
-                          columns=['Date', 'Ptf_Value'])
+        df = pd.DataFrame(
+            list(zip(self.date_memory, self.asset_memory)),
+            columns=["Date", "Ptf_Value"],
+        )
         df = df.set_index("Date")
         return df
 
@@ -200,10 +225,15 @@ class TradingEnv(gym.Env, ABC):
         dfs.plot()
 
     def build_observation_space(self):
-        return gym.spaces.Box(low=-np.inf,
-                              high=np.inf,
-                              shape=(self.config["obs_price_hist"] * self.data_feed.num_assets +
-                                     self.data_feed.num_assets + 1,))
+        return gym.spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(
+                self.config["obs_price_hist"] * self.data_feed.num_assets
+                + self.data_feed.num_assets
+                + 1,
+            ),
+        )
 
     def build_action_space(self):
         return gym.spaces.Box(low=-1, high=1, shape=(self.data_feed.num_assets,))
@@ -216,25 +246,27 @@ class TradingEnv(gym.Env, ABC):
 if __name__ == "__main__":
 
     from src.data.rebalancing_schedule import PeriodicSchedule
-    from src.data.data_feed import CSVDataFeed
+    from src.data.feed import CSVDataFeed
     import matplotlib.pyplot as plt
 
-    feed = CSVDataFeed(file_name="example_data.csv")
+    feed = CSVDataFeed(file_name="../../data/example_data.csv")
 
-    env_config = {"initial_balance": 10000,
-                  "benchmark_type": "custom",
-                  "benchmark_wgts": np.array([0.5, 0.5]),
-                   "start_date": "2018-12-31",
-                  "end_date": "2020-12-31",
-                  "busday_offset_start": 250,
-                  "cost_pct": 0.0005,
-                  "reward_scaling": 1,
-                  "obs_price_hist": 5}
+    env_config = {
+        "initial_balance": 10000,
+        "benchmark_type": "custom",
+        "benchmark_wgts": np.array([0.5, 0.5]),
+        "start_date": "2018-12-31",
+        "end_date": "2020-12-31",
+        "busday_offset_start": 250,
+        "cost_pct": 0.0005,
+        "reward_scaling": 1,
+        "obs_price_hist": 5,
+    }
 
     # now try a different rebalancing frequency...
-    schedule = PeriodicSchedule(frequency='WOM-3FRI')
+    schedule = PeriodicSchedule(frequency="WOM-3FRI")
 
-    env = TradingEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule)
+    env = BaseEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule)
     obs = env.reset()
     done = False
     while not done:
@@ -243,6 +275,3 @@ if __name__ == "__main__":
         obs, rew, done, _ = env.step(action)
     env.plot_current_performance()
     plt.show()
-
-
-
