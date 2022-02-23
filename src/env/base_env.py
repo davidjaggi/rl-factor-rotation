@@ -246,7 +246,7 @@ class BaseEnv(gym.Env, ABC):
 if __name__ == "__main__":
 
     from src.data.rebalancing_schedule import PeriodicSchedule
-    from src.data.data_feed import CSVDataFeed
+    from src.data.feed import CSVDataFeed
     import matplotlib.pyplot as plt
 
     feed = CSVDataFeed(file_name="../../data/example_data.csv")
