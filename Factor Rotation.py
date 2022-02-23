@@ -1,12 +1,15 @@
 # %%
-import numpy as np
-from src.data.rebalancing_schedule import PeriodicSchedule
-from src.data.feed import CSVDataFeed
-from src.env.base_env import BaseEnv
 import matplotlib.pyplot as plt
+import numpy as np
+
+from src.data.feed import CSVDataFeed
+from src.data.rebalancing_schedule import PeriodicSchedule
+from src.env.base_env import BaseEnv
+from src.utils.load_path import load_data_path
 
 # %%
-feed = CSVDataFeed(file_name="/workspaces/rl-factor-rotation/src/env/example_data.csv")
+data_path = load_data_path()
+feed = CSVDataFeed(file_name=data_path + "/example_data.csv")
 
 env_config = {
     "initial_balance": 10000,
