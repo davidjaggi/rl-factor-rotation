@@ -5,7 +5,7 @@ import eikon as ek
 
 
 MAX_DATA_SIZE = 50000
-ek.set_app_key("<< INSERT YOUR KEY HERE >>")
+ek.set_app_key("<< INSERT KEY HERE>>")
 
 
 def get_timeseries(rics, fields, start_date, end_date, date_ind=True, transform=False):
@@ -57,10 +57,12 @@ def get_timeseries(rics, fields, start_date, end_date, date_ind=True, transform=
 if __name__ == "__main__":
 
     # This is an example for downloading Google stock OHLCV prices...
-    all_rics = ['GOOGL.O']
+    all_rics = ['GOOGL.O','AAPL.O']
     price_flds = ['TR.PriceOpen', 'TR.PriceHigh', 'TR.PriceLow', 'TR.PriceClose', 'TR.Volume']
     prices = get_timeseries(rics=all_rics,
                             fields=price_flds,
                             start_date="2015-12-31",
                             end_date="2020-12-31")
-    # prices["Price Close"].plot()
+
+    # store as csv
+    prices.to_csv('example_data.csv')
