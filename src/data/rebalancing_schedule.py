@@ -3,8 +3,16 @@ from pandas.tseries.offsets import BDay
 
 
 class RebalancingSchedule:
+    """
+    Class to generate a rebalancing schedule for a portfolio.
+
+    Args:
+        start_date (str): The start date of the rebalancing schedule.
+        end_date (str): The end date of the rebalancing schedule.
+
     # see here for all possible alias schedules:
     # https://pandas.pydata.org/pandas-docs/version/0.24/user_guide/timeseries.html#timeseries-offset-aliases
+    """
 
     def __init__(self, start_date=None, end_date=None):
         self.start_date = start_date
@@ -32,15 +40,26 @@ class RebalancingSchedule:
 
 
 class PeriodicSchedule(RebalancingSchedule):
+    """
+    Class to generate a rebalancing schedule for a portfolio.
+
+    Args:
+        frequency (str): The frequency of the rebalancing schedule.
+        holidays (list): A list of holidays to exclude from the rebalancing schedule.
+        skip_day (list): A list of days to skip from the rebalancing schedule.
+        skip_month (list): A list of months to skip from the rebalancing schedule.
+        skip_year (list): A list of years to skip from the rebalancing schedule.
+    """
+
     def __init__(
-        self,
-        frequency,
-        holidays=BDay,
-        skip_day=None,
-        skip_month=None,
-        skip_year=None,
-        *args,
-        **kwargs
+            self,
+            frequency,
+            holidays=BDay,
+            skip_day=None,
+            skip_month=None,
+            skip_year=None,
+            *args,
+            **kwargs
     ):
         self.frequency = frequency
         self.holidays = holidays
@@ -49,7 +68,7 @@ class PeriodicSchedule(RebalancingSchedule):
         self.skip_year = skip_year
         super().__init__(*args, **kwargs)
 
-    def schedule(self):
+    def schedule(self) -> list:
         if self.start_date is None or self.end_date is None:
             raise ValueError("Start and End Date have to be set!")
 

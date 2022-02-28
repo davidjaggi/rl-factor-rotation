@@ -2,12 +2,11 @@
 # this script is heavitly based on the work of FinRL
 # https://github.com/AI4Finance-Foundation/FinRL/blob/master/finrl/finrl_meta/env_stock_trading/env_stocktrading.py
 # %%
-import numpy as np
 import gym
-from gym.utils import seeding
-import pandas as pd
 import matplotlib.pyplot as plt
-import itertools
+import numpy as np
+import pandas as pd
+from gym.utils import seeding
 
 # %%
 BASE_CONFIG = {

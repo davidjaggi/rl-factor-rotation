@@ -22,8 +22,12 @@ BASE_CONFIG = {
 
 
 class BaseEnv(gym.Env, ABC):
+    """
+    Base class for all trading environments.
+    """
+
     def __init__(
-        self, data_feed, config={}, rebalance_schedule=None, indicator_pipeline=None
+            self, data_feed, config={}, rebalance_schedule=None, indicator_pipeline=None
     ):
         """Initialises the class"""
 
@@ -72,6 +76,7 @@ class BaseEnv(gym.Env, ABC):
         self._seed()
 
     def reset(self):
+        """Resets the environment to its initial state"""
 
         self.terminal = False
 
@@ -97,6 +102,7 @@ class BaseEnv(gym.Env, ABC):
         return self.state
 
     def build_observation(self, date):
+        """ Builds the observation space """
         obs = np.empty((0, self.data_feed.num_assets), float)
         if self.indicator_pipeline is not None:
             # this will have to be built first
@@ -193,7 +199,7 @@ class BaseEnv(gym.Env, ABC):
         elif self.config["benchmark_type"] == "custom":
             wgts = self.config["benchmark_wgts"]
         else:
-            raise ValueError("Benchmark type not known yet !")
+            raise ValueError("Benchmark type not known yet!")
         return wgts
 
     @property

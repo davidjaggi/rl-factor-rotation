@@ -11,7 +11,7 @@ from src.utils.load_path import load_data_path
 data_path = load_data_path()
 feed = CSVDataFeed(file_name=data_path + "/example_data.csv")
 
-env_config = {
+ENV_CONFIG = {
     "initial_balance": 10000,
     "benchmark_type": "custom",
     "benchmark_wgts": np.array([0.5, 0.5]),
@@ -26,7 +26,7 @@ env_config = {
 # now try a different rebalancing frequency...
 schedule = PeriodicSchedule(frequency="WOM-3FRI")
 # %%
-env = BaseEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule)
+env = BaseEnv(data_feed=feed, config=ENV_CONFIG, rebalance_schedule=schedule)
 obs = env.reset()
 done = False
 while not done:

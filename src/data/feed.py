@@ -40,12 +40,12 @@ class CSVDataFeed(Feed):
         self.reset_feed(self.start_date, self.end_date)
         self.num_assets = len(self.data.keys())
 
-    def reset_feed(self, start_dt, end_dt):
+    def reset_feed(self, start_dt, end_dt) -> dict:
         """resets the datafeed, i.e. pulls new data if necessary"""
 
         # only download new data if start and end date are not the same as before or if data is empty
         if (self.start_date != start_dt or self.end_date != end_dt) or (
-            len(self.data) == 0
+                len(self.data) == 0
         ):
             data = pd.read_csv(self.file_name, index_col=0)
             data["Date"] = pd.to_datetime(
@@ -72,7 +72,7 @@ class CSVDataFeed(Feed):
         first_df = next(iter(self.data.values()))
         return first_df.index
 
-    def _convert_to_dict(self, price_data):
+    def _convert_to_dict(self, price_data) -> dict:
         """converts the data in df format to dict of df's, one key per asset"""
 
         ts_data = {}
@@ -80,7 +80,7 @@ class CSVDataFeed(Feed):
             df_temp = price_data.loc[price_data.loc[:, "Instrument"] == ric, :]
             df_temp = df_temp.drop("Instrument", 1)
             df_temp = df_temp.set_index("Date")
-            df_temp = df_temp.loc[self.start_date : self.end_date, :]
+            df_temp = df_temp.loc[self.start_date: self.end_date, :]
             ts_data[ric] = df_temp
         return ts_data
 
