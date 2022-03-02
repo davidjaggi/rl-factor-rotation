@@ -152,7 +152,7 @@ class BaseEnv(gym.Env, ABC):
         self.date_memory.extend([dt for dt in self.current_prices.index[1:]])
 
         self.reward = self.reward_func()
-        self.reward = self.reward * self.reward_scaling
+        self.reward = self.reward * self.reward_scaling  # scale reward
         self.rewards_memory.append(self.reward)
         self.weights_memory.append(wgts)
 
@@ -168,10 +168,11 @@ class BaseEnv(gym.Env, ABC):
         return action
 
     def actions_to_weights(self, actions):
-        """Converts actions to portfolio weights"""
+        """Converts actions to portfolio weights
+        The current setup normalizes the weights to sum to 1."""
 
         actions = (actions - self.action_space.low[0]) / (
-            self.action_space.high[0] - self.action_space.low[0]
+                self.action_space.high[0] - self.action_space.low[0]
         )
         wgts = actions / np.sum(actions)
         return wgts
@@ -245,6 +246,7 @@ class BaseEnv(gym.Env, ABC):
         return gym.spaces.Box(low=-1, high=1, shape=(self.data_feed.num_assets,))
 
     def reward_func(self):
+        """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""
         reward = self.current_ptf_values[-1] - self.current_ptf_values_bmk[-1]
         return reward
 

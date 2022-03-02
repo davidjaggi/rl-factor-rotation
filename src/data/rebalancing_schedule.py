@@ -2,7 +2,7 @@ import pandas as pd
 from pandas.tseries.offsets import BDay
 
 
-class RebalancingSchedule:
+class RebalancingSchedule(object):
     """
     Class to generate a rebalancing schedule for a portfolio.
 
