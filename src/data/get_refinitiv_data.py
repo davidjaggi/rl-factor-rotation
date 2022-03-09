@@ -5,7 +5,8 @@ import eikon as ek
 
 
 MAX_DATA_SIZE = 50000
-ek.set_app_key("<< INSERT KEY HERE>>")
+# ek.set_app_key("<< INSERT KEY HERE>>")
+ek.set_app_key("ec7b2eeffc6c4087abc1e63b0629a40c91936976")
 
 
 def get_timeseries(rics, fields, start_date, end_date, date_ind=True, transform=False):
@@ -26,7 +27,7 @@ def get_timeseries(rics, fields, start_date, end_date, date_ind=True, transform=
         if date_ind:
             ts_request.insert(0, ts_request[0] + ".date")
         df_prices_new, err = ek.get_data(rics, ts_request)
-        all_ts_data = all_ts_data.append(df_prices_new)
+        all_ts_data = pd.concat([all_ts_data,df_prices_new])
         strt = ed
         ed = strt + timedelta(jump_dates)
 
@@ -36,12 +37,12 @@ def get_timeseries(rics, fields, start_date, end_date, date_ind=True, transform=
     if date_ind:
         ts_request.insert(0, ts_request[0] + ".date")
     df_prices_new, err = ek.get_data(rics, ts_request)
-    all_ts_data = all_ts_data.append(df_prices_new)
+    all_ts_data = pd.concat([all_ts_data,df_prices_new])
 
     # now take this out of the list into one large DataFrame
     df_all = all_ts_data.drop_duplicates()
     df_all['Date'].replace('', np.nan, inplace=True)
-    df_all.dropna(subset=['Date'], inplace=True)
+    df_all.dropna(subset=['Date'])
 
     # transform the output into dict if necessary
     if transform:
@@ -53,16 +54,12 @@ def get_timeseries(rics, fields, start_date, end_date, date_ind=True, transform=
     else:
         return df_all
 
-
 if __name__ == "__main__":
 
-    # This is an example for downloading Google stock OHLCV prices...
-    all_rics = ['GOOGL.O','AAPL.O']
-    price_flds = ['TR.PriceOpen', 'TR.PriceHigh', 'TR.PriceLow', 'TR.PriceClose', 'TR.Volume']
-    prices = get_timeseries(rics=all_rics,
-                            fields=price_flds,
-                            start_date="2015-12-31",
-                            end_date="2020-12-31")
 
-    # store as csv
-    prices.to_csv('example_data.csv')
+
+    price_flds = ['TR.PriceClose']
+    lowVolaINdex = get_timeseries(rics=['.MIWO0000IPUS'],
+                                  fields=price_flds,
+                                  start_date="2015-12-31",
+                                  end_date="2020-12-31")

@@ -1,11 +1,13 @@
 # %%
+import numpy as np
 import pandas as pd
 import pandas_datareader.data as web
+from datetime import datetime, timedelta
 
+from .generate_paths import generate_paths
 
 class Feed(object):
     """Create a feed object
-
     Args:
         start_date ([type]): start date of the data
         end_date ([type]): end date of the data
@@ -133,6 +135,164 @@ class CSVDataFeed(Feed):
 
         return data_out
 
+class GBMtwoAssetsFeed(object):
+
+    def __init__(self, gbmInput:dict, num_assets:int, start_date=None, end_date=None, price_field_name="Close"):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.price_field_name = price_field_name
+
+        if datetime.strptime(start_date,"%Y-%m-%d") > datetime.strptime(end_date,"%Y-%m-%d"):
+            raise Exception(f"start date: {start_date} can't be older than end date!")
+        else:
+            self.num_assets = num_assets
+            self.gbmSettings = gbmInput
+
+        if self.checkGBMInput():
+            self.data = []
+            self.reset_feed(self.start_date,self.end_date)
+
+    def checkGBMInput(self) -> bool:
+        necessaryKeys = ['StartingPrice','drift','vola','correlation']
+
+        if not all(key in self.gbmSettings for key in necessaryKeys):
+            raise KeyError
+
+        for key in necessaryKeys:
+            if key == 'correlation':
+                if not (isinstance(self.gbmSettings[key], np.matrix) or self.gbmSettings[key].shape == (self.num_assets,self.num_assets)):
+                    raise Exception("TypeError or Shape Error Correlation Matrix should be np.matrix() or the dimensions do not add up.")
+            else:
+                if not (isinstance(self.gbmSettings[key],(np.ndarray, np.generic)) or len(self.gbmSettings[key]) == self.num_assets):
+                    raise TypeError
+        return True
+
+    def reset_feed(self, start_dt, end_dt) -> dict:
+        """resets the datafeed, i.e. pulls new data if necessary"""
+
+        # only download new data if start and end date are not the same as before or if data is empty
+        # only download new data if start and end date are not the same as before or if data is empty
+        if (self.start_date != start_dt or self.end_date != end_dt) or (
+                len(self.data) == 0
+        ):
+            data = generate_paths(
+                spot=self.gbmSettings['StartingPrice'],
+                drift=self.gbmSettings['drift'],
+                sigma=self.gbmSettings['vola'],
+                correlation=self.gbmSettings['correlation'],
+                start_date=start_dt,
+                end_date=end_dt,
+                dt=1)
+
+            if self.start_date is None:
+                self.start_date = data.index.min().strftime("%Y-%m-%d")
+
+            if self.end_date is None:
+                self.end_date = data.index.max().strftime("%Y-%m-%d")
+
+            if pd.to_datetime(self.start_date) < data.index.min():
+                raise ValueError("No data available at specified start date")
+
+            if data.index.max() < pd.to_datetime(self.end_date):
+                raise ValueError("No data available at specified end date")
+
+            self.data = self._convert_to_dict(data)
+
+    def _convert_to_dict(self,dataDf:pd.DataFrame) -> dict:
+        data = {}
+        for col in dataDf.columns:
+            tempDF = pd.DataFrame(index=dataDf.index, columns=[self.price_field_name], data=dataDf[col].values)
+            tempDF.index.name = 'Date'
+            data[col] = tempDF
+        return data
+
+    def get_price_data(self, end_dt, start_dt=None, offset=None):
+        """returns price data in one dataframe, each column contains an asset"""
+
+        if start_dt is None and offset is not None:
+            start_dt = (pd.to_datetime(end_dt) - timedelta(days=offset)).strftime("%Y-%m-%d")
+
+        prices = self.get_data(
+            end_dt=end_dt,
+            start_dt=start_dt,
+            fields=self.price_field_name,
+            offset=offset,
+        )
+        return prices
+
+    def get_data(self, end_dt, start_dt=None, fields=None, offset=None):
+        """returns data for all assets for given fields
+        NOTE: Currently, only one field is allowed so that data can be returned in one DataFrame
+        """
+
+        if isinstance(fields, list):
+            raise ValueError("Multiple fields not supported yet in get_data ")
+
+        if fields is None:
+            fields = self.get_available_fields()
+            if len(fields) > 0:
+                raise ValueError("Multiple fields not supported yet in get_data ")
+
+        go_via_offset = False
+        if start_dt is None:
+            start_dt = end_dt
+            if offset is not None:
+                go_via_offset = True
+
+        data_out = pd.DataFrame()
+        for k, v in self.data.items():
+            if go_via_offset:
+                data_temp = self.data[k].loc[:end_dt, fields].iloc[-offset:].to_frame()
+            else:
+                data_temp = self.data[k].loc[start_dt:end_dt, fields].to_frame()
+            data_temp.columns = [k]
+            data_out = pd.concat([data_out, data_temp], axis=1)
+
+        return data_out
+
+
+    def get_data(self, end_dt, start_dt=None, fields=None, offset=None):
+        """returns data for all assets for given fields
+        NOTE: Currently, only one field is allowed so that data can be returned in one DataFrame
+        """
+
+        if isinstance(fields, list):
+            raise ValueError("Multiple fields not supported yet in get_data ")
+
+        if fields is None:
+            fields = self.get_available_fields()
+            if len(fields) > 0:
+                raise ValueError("Multiple fields not supported yet in get_data ")
+
+        go_via_offset = False
+        if start_dt is None:
+            start_dt = end_dt
+            if offset is not None:
+                go_via_offset = True
+
+        data_out = pd.DataFrame()
+        for k, v in self.data.items():
+            if go_via_offset:
+                data_temp = self.data[k].loc[:end_dt, fields].iloc[-offset:].to_frame()
+            else:
+                data_temp = self.data[k].loc[start_dt:end_dt, fields].to_frame()
+            data_temp.columns = [k]
+            data_out = pd.concat([data_out, data_temp], axis=1)
+
+        return data_out
+
+    def get_data_idx(self):
+        """gets all possible dates/indexes from the data"""
+
+        first_df = next(iter(self.data.values()))
+        return first_df.index
+
+    def get_available_fields(self):
+        """returns a list of all possible fields from the data"""
+
+        return next(iter(self.data.values())).colums
+
+
 
 # %%
 class StooqDataFeed(Feed):
@@ -253,5 +413,26 @@ class StooqDataFeed(Feed):
 
 
 # %%
-if __name__ == "__main__":
-    feed = StooqDataFeed(["AAPL", "MSFT", "GOOG"], start_date="2017-01-01", end_date="2018-01-01")
+# if __name__ == "__main__":
+#     try:
+#         feedDataFeed = StooqDataFeed(["AAPL", "MSFT", "GOOG"], start_date="2017-01-01", end_date="2018-01-01")
+#     except Exception as e:
+#         print(e)
+#
+#     try:
+#         feed = CSVDataFeed('C:\\Users\\grbi\\PycharmProjects\\rl-factor-rotation\\data\\example_data.csv')
+#     except Exception as e:
+#         print(e)
+#
+#     try:
+#         feed = CSVDataFeed('C:\\Users\\grbi\\PycharmProjects\\rl-factor-rotation\\data\\example_data.csv')
+#     except Exception as e:
+#         print(e)
+#
+#     gbmInput = {'StartingPrice': np.array([100, 100]),
+#                 'drift': np.array([0.05 / np.sqrt(260), 0.1 / np.sqrt(260)]),
+#                 'vola': np.array([0.1 / np.sqrt(260), 0.2 / np.sqrt(260)]),
+#                 'correlation': np.matrix([[1, 0.3], [0.3, 1]])}
+#
+#     feed = GBMtwoAssetsFeed(gbmInput=gbmInput, num_assets=2, end_date="2020-12-31", start_date="2018-12-31")
+#     print(feed)
