@@ -25,6 +25,9 @@ class Feed(object):
     def get_price_data(self, end_dt, start_dt=None):
         raise NotImplementedError
 
+    def get_return_data(self, end_dt, start_dt=None):
+        raise NotImplementedError
+
     def get_data(self, end_dt, start_dt=None, fields=None):
         raise NotImplementedError
 
@@ -104,6 +107,11 @@ class CSVDataFeed(Feed):
             offset=offset,
         )
         return prices
+
+    def get_returns_data(self, end_dt, start_dt=None, offset=None):
+        prices = self.get_price_data(end_dt, start_dt, offset)
+        returns = prices.pct_change()
+        return returns
 
     def get_data(self, end_dt, start_dt=None, fields=None, offset=None):
         """returns data for all assets for given fields
