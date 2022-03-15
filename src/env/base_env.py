@@ -123,7 +123,10 @@ class BaseEnv(gym.Env, ABC):
             end_dt=self.rebalance_periods[self.day + 1],
             start_dt=self.rebalance_periods[self.day],
         )
-
+        self.current_returns = self.data_feed.get_returns_data(
+            end_dt=self.rebalance_periods[self.day + 1],
+            start_dt=self.rebalance_periods[self.day],
+        )
         # transform actions to units
         self.actions_memory.append(actions)
         actions = self._convert_action(actions)
