@@ -104,12 +104,12 @@ class BaseEnv(gym.Env, ABC):
     def build_observation(self, date):
         """ Builds the observation space """
         obs = np.empty((0, self.data_feed.num_assets), float)
+        prices = self.data_feed.get_price_data(date, offset=self.obs_price_hist)
         if self.indicator_pipeline is not None:
             # this will have to be built first
             for indicator in self.indicator_pipeline.indicators:
-                inds = indicator.calc()
+                inds = indicator.calc(self, prices)
                 obs = np.append(obs, inds, axis=0)
-        prices = self.data_feed.get_price_data(date, offset=self.obs_price_hist)
         obs = np.append(obs, prices.to_numpy(), axis=0).flatten(order="F")
         obs = np.append(obs, self.current_holdings)  # attach current holdings
         obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value
@@ -257,17 +257,11 @@ class BaseEnv(gym.Env, ABC):
 if __name__ == "__main__":
 
     from src.data.rebalancing_schedule import PeriodicSchedule
-    from src.data.feed import CSVDataFeed, GBMtwoAssetsFeed
+    from src.data.feed import CSVDataFeed
+    from src.env.indicator import MovingAverage, IndicatorPipeline
     import matplotlib.pyplot as plt
 
     feed = CSVDataFeed(file_name="../../data/example_data.csv")
-
-    gbmInput = {'StartingPrice': np.array([100, 100]),
-                'drift': np.array([0.05 / np.sqrt(260), 0.1 / np.sqrt(260)]),
-                'vola': np.array([0.1 / np.sqrt(260), 0.2 / np.sqrt(260)]),
-                'correlation': np.matrix([[1, 0.3], [0.3, 1]])}
-
-    feed = GBMtwoAssetsFeed(gbmInput=gbmInput, num_assets=2, end_date="2020-12-31", start_date="2018-12-31")
 
     env_config = {
         "initial_balance": 10000,
@@ -284,7 +278,11 @@ if __name__ == "__main__":
     # now try a different rebalancing frequency...
     schedule = PeriodicSchedule(frequency="WOM-3FRI")
 
-    env = BaseEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule)
+    # add indicator pipeline
+    indicator_pipeline = IndicatorPipeline()
+    indicator_pipeline.add_indicator(MovingAverage(window=3))
+
+    env = BaseEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule, indicator_pipeline=indicator_pipeline)
     obs = env.reset()
     done = False
     while not done:
