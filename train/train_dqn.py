@@ -1,17 +1,19 @@
 import os
-import datetime
 import argparse
 
-import gym
+import numpy as np
 
 import ray
 from ray.tune.registry import register_env
 from ray.rllib.agents import dqn
 from ray.tune.logger import pretty_print
 
+from src.data.rebalancing_schedule import PeriodicSchedule
+from src.data.data_feed import CSVDataFeed
+from src.environment.base_trading_env import TradingEnv
 
-# this is just directories, need to see if you need it...
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
 parser = argparse.ArgumentParser()
@@ -50,37 +52,27 @@ parser.add_argument(
     help="Reward at which we stop training.")
 
 
-def env_creator(env_config):
+def env_creator(config):
 
     """ This is a function that returns an instance of the environment we are using """
 
-    # TODO:
-    #   * insert the environment from the jupyter notebook and return it
+    f_name = os.path.join(ROOT_DIR, "src/environment/example_data.csv")
+    feed = CSVDataFeed(file_name=f_name)
 
-    """
-    if env_config['train_config']['train']:
-        data_periods = env_config['train_config']["train_data_periods"]
-    else:
-        data_periods = env_config['train_config']["eval_data_periods"]
+    env_config = {"initial_balance": 10000,
+                  "benchmark_type": "custom",
+                  "benchmark_wgts": np.array([0.5, 0.5]),
+                  "start_date": "2018-12-31",
+                  "end_date": "2020-12-31",
+                  "busday_offset_start": 250,
+                  "cost_pct": 0.0005,
+                  "reward_scaling": 1,
+                  "obs_price_hist": 5}
 
-    data_start_day = datetime.datetime(year=data_periods[0], month=data_periods[1], day=data_periods[2])
-    data_end_day = datetime.datetime(year=data_periods[3], month=data_periods[4], day=data_periods[5])
+    # now try a different rebalancing frequency...
+    schedule = PeriodicSchedule(frequency='WOM-3FRI')
 
-    lob_feed = HistoricalDataFeed(data_dir=os.path.join(DATA_DIR, "market", env_config['train_config']["symbol"]),
-                                  instrument=env_config['train_config']["symbol"],
-                                  start_day=data_start_day,
-                                  end_day=data_end_day,
-                                  samples_per_file=200)
-
-    exclude_keys = {'train_config'}
-    env_config_clean = {k: env_config[k] for k in set(list(env_config.keys())) - set(exclude_keys)}
-
-    return TradingEnvDQN(broker=Broker(lob_feed),
-                         action_space=gym.spaces.Discrete(11),
-                         config=env_config_clean)
-    """
-
-    env = "OUR ENVIRONMENT IMPLEMENTATION NEEDS TO GO HERE"
+    env = TradingEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule)
     return env
 
 
