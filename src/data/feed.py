@@ -1,10 +1,12 @@
 # %%
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pandas_datareader.data as web
-from datetime import datetime, timedelta
 
 from .generate_paths import generate_paths
+
 
 class Feed(object):
     """Create a feed object
@@ -83,7 +85,8 @@ class CSVDataFeed(Feed):
         ts_data = {}
         for ric in price_data.Instrument.unique():
             df_temp = price_data.loc[price_data.loc[:, "Instrument"] == ric, :]
-            df_temp = df_temp.drop("Instrument", 1)
+            # drop Instrument column
+            df_temp = df_temp.drop(columns=["Instrument"])
             df_temp = df_temp.set_index("Date")
             df_temp = df_temp.loc[self.start_date: self.end_date, :]
             ts_data[ric] = df_temp

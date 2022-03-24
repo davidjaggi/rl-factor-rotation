@@ -87,6 +87,7 @@ class BaseEnv(gym.Env, ABC):
         self.trades = 0
         self.episode = 0
         self.current_holdings = np.zeros(self.data_feed.num_assets)
+        self.current_weights = self.config["initial_weights"]
         self.current_holdings_bmk = np.zeros(self.data_feed.num_assets)
 
         # memorize changes
@@ -96,6 +97,7 @@ class BaseEnv(gym.Env, ABC):
         self.rewards_memory = []
         self.actions_memory = []
         self.weights_memory = []
+        self.trades_memory = []
 
         # initialize state
         self.state = self.build_observation(self.rebalance_periods[self.day])
@@ -130,10 +132,11 @@ class BaseEnv(gym.Env, ABC):
         # transform actions to units
         self.actions_memory.append(actions)
         actions = self._convert_action(actions)
-        wgts = self.actions_to_weights(actions)
-        units, costs = self.weights_to_shares(
-            wgts, self.asset_memory[-1], self.current_holdings
+        trades = self.actions_to_trades(actions)
+        wgts, units, costs = self.weights_to_shares(
+            trades, self.current_weights, self.asset_memory[-1], self.current_holdings
         )
+        self.current_weights = wgts
         self.current_holdings = units
         self.current_ptf_values = np.sum(
             units * self.current_prices.iloc[1:, :].to_numpy(), axis=1
@@ -143,8 +146,8 @@ class BaseEnv(gym.Env, ABC):
         # do the same with a benchmark if there is one...
         if self.config["benchmark_type"] is not None:
             wgts_bmk = self._benchmark_weights()
-            units_bmk, costs_bmk = self.weights_to_shares(
-                wgts_bmk, self.bmk_memory[-1], self.current_holdings_bmk
+            wgts_bmk, units_bmk, costs_bmk = self.weights_to_shares(
+                None, wgts_bmk, self.bmk_memory[-1], self.current_holdings_bmk
             )
             self.current_holdings_bmk = units_bmk
             self.current_ptf_values_bmk = np.sum(
@@ -158,6 +161,7 @@ class BaseEnv(gym.Env, ABC):
         self.reward = self.reward * self.reward_scaling  # scale reward
         self.rewards_memory.append(self.reward)
         self.weights_memory.append(wgts)
+        self.trades_memory.append(trades)
 
         # state: s -> s+1
         self.day += 1
@@ -170,28 +174,39 @@ class BaseEnv(gym.Env, ABC):
         """Used if actions need to be transformed without having to change entire step() method"""
         return action
 
-    def actions_to_weights(self, actions):
+    def actions_to_trades(self, actions):
         """Converts actions to portfolio weights
         The current setup normalizes the weights to sum to 1."""
 
         actions = (actions - self.action_space.low[0]) / (
                 self.action_space.high[0] - self.action_space.low[0]
         )
-        wgts = actions / np.sum(actions)
-        return wgts
+        trades = actions / np.sum(actions)
+        # sum of array can be max 5%
+        factor = np.sum(np.abs(trades)) / 0.05
+        trades = trades / factor
+        return trades
 
-    def weights_to_shares(self, weights, current_val, current_holding):
+    def weights_to_shares(self, trades, current_weights, current_val, current_holding):
         """Logic for transforming raw actions into number of shares for each asset"""
+        asset_prices = self.current_prices.iloc[0, :].to_numpy()
+        if trades is None:
+            new_weights = current_weights
+        else:
+            new_weights = np.add(trades, current_weights)
+            # normalize weights
+            new_weights = new_weights / np.sum(new_weights)
 
-        asset_values = weights * current_val
-        units_gross = asset_values / self.current_prices.iloc[0, :].to_numpy()
+        asset_values = new_weights * current_val
+        units_gross = asset_values / asset_prices
         costs = (
-            np.abs(units_gross - current_holding)
-            * self.current_prices.iloc[0, :].to_numpy()
-            * self.cost_pct
+                np.abs(units_gross - current_holding)
+                * asset_prices
+                * self.cost_pct
         )
-        units_net = (asset_values - costs) / self.current_prices.iloc[0, :].to_numpy()
-        return units_net, np.sum(costs)
+        units_net = (asset_values - costs) / asset_prices
+        weights = (units_net * asset_prices) / np.sum(units_net * asset_prices)
+        return weights, units_net, np.sum(costs)
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -261,16 +276,10 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     feed = CSVDataFeed(file_name="../../data/example_data.csv")
-    """
-    gbmInput = {'StartingPrice': np.array([100, 100]),
-                'drift': np.array([0.05 / np.sqrt(260), 0.1 / np.sqrt(260)]),
-                'vola': np.array([0.1 / np.sqrt(260), 0.2 / np.sqrt(260)]),
-                'correlation': np.matrix([[1, 0.3], [0.3, 1]])}
 
-    feed = GBMtwoAssetsFeed(gbmInput=gbmInput, num_assets=2, end_date="2020-12-31", start_date="2018-12-31")
-    """
-    env_config = {
+    ENV_CONFIG = {
         "initial_balance": 10000,
+        "initial_weights": np.array([0.5, 0.5]),
         "benchmark_type": "custom",
         "benchmark_wgts": np.array([0.5, 0.5]),
         "start_date": "2018-12-31",
@@ -284,7 +293,7 @@ if __name__ == "__main__":
     # now try a different rebalancing frequency...
     schedule = PeriodicSchedule(frequency="WOM-3FRI")
 
-    env = BaseEnv(data_feed=feed, config=env_config, rebalance_schedule=schedule)
+    env = BaseEnv(data_feed=feed, config=ENV_CONFIG, rebalance_schedule=schedule)
     obs = env.reset()
     done = False
     while not done:

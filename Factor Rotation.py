@@ -13,6 +13,7 @@ feed = CSVDataFeed(file_name=data_path + "/example_data.csv")
 
 ENV_CONFIG = {
     "initial_balance": 10000,
+    "initial_weights": np.array([0.5, 0.5]),
     "benchmark_type": "custom",
     "benchmark_wgts": np.array([0.5, 0.5]),
     "start_date": "2018-12-31",
@@ -37,3 +38,4 @@ env.plot_current_performance()
 plt.show()
 
 # %%
+env.weights_memory
