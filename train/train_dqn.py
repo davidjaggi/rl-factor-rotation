@@ -1,24 +1,30 @@
-import os
 import argparse
+import os
 
 import numpy as np
-
 import ray
-from ray.tune.registry import register_env
 from ray.rllib.agents import dqn
 from ray.tune.logger import pretty_print
+from ray.tune.registry import register_env
 
+from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
-from src.data.data_feed import CSVDataFeed
-from src.environment.base_trading_env import TradingEnv
+from src.env.base_env import BaseEnv
+from src.utils.load_path import load_root_path
+
+ROOT_PATH = load_root_path()
 
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+class TradingEnv(BaseEnv):
+    def __init__(self, data_feed, rebalancing_schedule, **kwargs):
+        super().__init__(**kwargs)
+        self.data_feed = data_feed
+        self.rebalancing_schedule = rebalancing_schedule
 
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--env", type=str, default="lob_env")
+parser.add_argument("--env", type=str, default="trading_env")
 parser.add_argument("--num-cpus", type=int, default=1)
 
 parser.add_argument(
@@ -52,22 +58,24 @@ parser.add_argument(
     help="Reward at which we stop training.")
 
 
-def env_creator(config):
-
+def trading_env_creator(config):
     """ This is a function that returns an instance of the environment we are using """
 
-    f_name = os.path.join(ROOT_DIR, "src/environment/example_data.csv")
+    f_name = os.path.join(ROOT_PATH, "data/example_data.csv")
     feed = CSVDataFeed(file_name=f_name)
 
-    env_config = {"initial_balance": 10000,
-                  "benchmark_type": "custom",
-                  "benchmark_wgts": np.array([0.5, 0.5]),
-                  "start_date": "2018-12-31",
-                  "end_date": "2020-12-31",
-                  "busday_offset_start": 250,
-                  "cost_pct": 0.0005,
-                  "reward_scaling": 1,
-                  "obs_price_hist": 5}
+    env_config = {
+        "initial_balance": 10000,
+        "initial_weights": np.array([0.5, 0.5]),
+        "benchmark_type": "custom",
+        "benchmark_wgts": np.array([0.5, 0.5]),
+        "start_date": "2018-12-31",
+        "end_date": "2020-12-31",
+        "busday_offset_start": 250,
+        "cost_pct": 0.0005,
+        "reward_scaling": 1,
+        "obs_price_hist": 5,
+    }
 
     # now try a different rebalancing frequency...
     schedule = PeriodicSchedule(frequency='WOM-3FRI')
@@ -82,7 +90,7 @@ if __name__ == "__main__":
 
     # For debugging the env or other modules, set local_mode=True
     ray.init(local_mode=True, num_cpus=args.num_cpus)
-    register_env(args.env, env_creator)
+    register_env(args.env, trading_env_creator)
 
     # Config necessary for RLlib training
     config = {
@@ -92,7 +100,7 @@ if __name__ == "__main__":
         "framework": args.framework,
         "evaluation_interval": 10,
         # Number of episodes to run per evaluation period.
-        "evaluation_num_episodes": 1,
+        "evaluation_duration_unit": 1,
         "evaluation_config": {
             "explore": False,
             "render_env": False,
