@@ -9,4 +9,9 @@ Data:
 - Few simple factor etfs as the investment space
 - Store a simple data frame as data feed
 
+Tasks
+ - [ ] Data to use with the repository
+ - [ ] Descrete action space with three different options
+ - [ ] Create agent to run the model
+
 
