@@ -117,6 +117,43 @@ class BaseEnv(gym.Env, ABC):
         obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value
         return obs
 
+    def agent_pos(self, obs, theta):  # Determine our position, F, at time t
+        M = len(theta) - 2  # M is the look back period, theta is a parameter to be optimized with gradient ascent
+        T = len(obs)  # length of observation input vector
+        Ft = np.zeros(T)  # filler
+
+        for t in range(M, T):
+            obst = np.concatenate([[1], obs[t - M:t], [Ft[t - 1]]])  # observation at time t
+            Ft[t] = np.tanh(np.dot(theta, obst))  # output will be value between 0 and 1
+
+        # at every time step, the model will be fed its last position and a series of historical price changes that it can use to calculate its next position
+
+        return Ft
+
+    def agent_ret(self, obs, delta):  # calculation return for every position Ft with transaction cost delta
+        Ft = self.agent_pos(obs)  # calculating position Ft
+        T = len(x)  # length of observation input vector
+        rets = Ft[0:T - 1] * x[1:T] - delta * np.abs(Ft[1:T] - Ft[0:T - 1])  # calculation return
+        # formula for return = F_(t-1)*r_t - delta*abs(F_t - F_(t-1))
+        return np.concatenate([[0], rets])
+
+    def agent_grad(self, obs):  # to perform gradient ascent, the derivative of the reward function with respect to theta needs to be used
+        # reward function: self.current_ptf_values[-1] - self.current_ptf_values_bmk[-1]
+
+
+
+    def agent_train(self, obs, epochs=500, M=5, delta=0.0025, learning_rate = 0.1):
+        theta = np.ones(M+2)
+        performance = np.zeros(epochs)  # store performance over time
+        for i in range(epochs):
+            gradient, reward = gradient(obs, theta, delta)
+            theta = theta + graddient * learning_rate
+
+            performance[i] = reward
+
+        return theta, performance
+
+
     def step(self, actions):
 
         assert self.terminal is False, "reset() must be called before step()"
@@ -298,6 +335,7 @@ if __name__ == "__main__":
     done = False
     while not done:
         action = env.action_space.sample()
+        # action = env.action_space.sample()
         # action = np.array([-1, 1])
         obs, rew, done, _ = env.step(action)
     env.plot_current_performance()
