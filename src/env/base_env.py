@@ -105,20 +105,19 @@ class BaseEnv(gym.Env, ABC):
 
     def build_observation(self, date):
         """ Builds the observation space """
-        obs = np.empty((0, self.data_feed.num_assets), float)
+        obs = np.empty((0, self.data_feed.num_assets), np.float)
         if self.indicator_pipeline is not None:
             # this will have to be built first
             for indicator in self.indicator_pipeline.indicators:
                 inds = indicator.calc()
                 obs = np.append(obs, inds, axis=0)
         prices = self.data_feed.get_price_data(date, offset=self.obs_price_hist)
-        obs = np.append(obs, prices.to_numpy(), axis=0).flatten(order="F")
+        obs = np.append(obs, prices.to_numpy(dtype=np.float), axis=0).flatten(order="F")
         obs = np.append(obs, self.current_holdings)  # attach current holdings
         obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value
         return obs
 
     def step(self, actions):
-
         assert self.terminal is False, "reset() must be called before step()"
 
         self.current_prices = self.data_feed.get_price_data(
@@ -130,8 +129,8 @@ class BaseEnv(gym.Env, ABC):
             start_dt=self.rebalance_periods[self.day],
         )
         # transform actions to units
-        self.actions_memory.append(actions)
         actions = self._convert_action(actions)
+        self.actions_memory.append(actions)
         trades = self.actions_to_trades(actions)
         wgts, units, costs = self.weights_to_shares(
             trades, self.current_weights, self.asset_memory[-1], self.current_holdings
@@ -172,20 +171,26 @@ class BaseEnv(gym.Env, ABC):
 
     def _convert_action(self, action):
         """Used if actions need to be transformed without having to change entire step() method"""
+        # let's convert the actions so the one with the higher value is bought and the other is sold
+        action = action - 1
         return action
 
     def actions_to_trades(self, actions):
         """Converts actions to portfolio weights
+        # TODO: make the trade factor configurable
         The current setup normalizes the weights to sum to 1."""
+        # action -1 is sell 5 % of asset 1
+        # action 0 is hold both assets
+        # action 1 is buy 5% of asset 1
+        if actions == -1:
+            return np.array([-0.05, 0.05])
+        elif actions == 0:
+            return np.zeros(2)
+        elif actions == 1:
+            return np.array([0.05, -0.05])
+        else:
+            raise ValueError("Invalid action: {}".format(actions))
 
-        actions = (actions - self.action_space.low[0]) / (
-                self.action_space.high[0] - self.action_space.low[0]
-        )
-        trades = actions / np.sum(actions)
-        # sum of array can be max 5%
-        factor = np.sum(np.abs(trades)) / 0.05
-        trades = trades / factor
-        return trades
 
     def weights_to_shares(self, trades, current_weights, current_val, current_holding):
         """Logic for transforming raw actions into number of shares for each asset"""
@@ -243,13 +248,30 @@ class BaseEnv(gym.Env, ABC):
         return df
 
     def plot_current_performance(self):
+        """Plot current performance of the agent"""
         if self.config["benchmark_type"] is not None:
             dfs = pd.concat([self.bmk_performance, self.ptf_performance], axis=1)
         else:
             dfs = self.ptf_performance
-        dfs.plot()
+        plt.plot(dfs)
+        plt.title("Portfolio Performance")
+        plt.legend(dfs.columns)
+        plt.show()
+
+    def plot_rewards(self):
+        """Plot the rewards over time"""
+        plt.plot(self.rewards_memory)
+        plt.title("Rewards")
+        plt.show()
+
+    def plot_actions(self):
+        """Plot the rewards over time"""
+        plt.plot(self.actions_memory)
+        plt.title("Actions")
+        plt.show()
 
     def build_observation_space(self):
+        """Builds the observation space"""
         return gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -258,10 +280,15 @@ class BaseEnv(gym.Env, ABC):
                 + self.data_feed.num_assets
                 + 1,
             ),
+            dtype=np.float64
         )
 
     def build_action_space(self):
-        return gym.spaces.Box(low=-1, high=1, shape=(self.data_feed.num_assets,))
+        # return three discrete action
+        # action 0 do nothing
+        # action 1 buy asset 1
+        # action 2 buy asset 2
+        return gym.spaces.Discrete(3)
 
     def reward_func(self):
         """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""
@@ -270,7 +297,6 @@ class BaseEnv(gym.Env, ABC):
 
 
 if __name__ == "__main__":
-
     from src.data.rebalancing_schedule import PeriodicSchedule
     from src.data.feed import CSVDataFeed
     import matplotlib.pyplot as plt
@@ -297,8 +323,8 @@ if __name__ == "__main__":
     obs = env.reset()
     done = False
     while not done:
+        # implement simple agent
         action = env.action_space.sample()
-        # action = np.array([-1, 1])
         obs, rew, done, _ = env.step(action)
     env.plot_current_performance()
     plt.show()
