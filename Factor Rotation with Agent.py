@@ -1,17 +1,17 @@
 # %%
+# TODO implement a custom experiment class
+# https://github.com/ray-project/ray/issues/9220#issue-648483764
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
-import ray
 from ray.rllib.agents.ppo import PPOTrainer
 from ray.tune.registry import register_env
 
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
-from src.utils.create_env import create_env
+from src.env.create_env import create_env
+from src.experiment.custom_experiment import CustomExperiment
 from src.utils.load_path import load_data_path
-
-# %%
-ray.init()
 
 # %%
 data_path = load_data_path()
@@ -43,28 +43,28 @@ env_config = {
 # register the environment
 register_env("base_env", create_env)
 
-
-# %%
-def test_agent(config=None):
-    agent = PPOTrainer(config)
-    env = create_env(config["env_config"])
-    episode_reward = np.array([0])
-    done = False
-    obs = env.reset()
-    while not done:
-        action = agent.compute_single_action(obs)
-        obs, rew, done, _ = env.step(action)
-        episode_reward = np.append(episode_reward, rew)
-    return episode_reward
-
-
-# %%
 config = {
     "env": "base_env",
     "env_config": env_config,
     "num_workers": 2,
     "num_gpus": 0}
-reward = test_agent(config)
+
+# %%
+experiment = CustomExperiment(
+    config=config,
+    env="base_env",
+    agent=PPOTrainer,
+    save_dir="./results")
+
+# %%
+# first we train the agent
+experiment.train(stop_criteria={"timesteps_total": 10000})
+# %%
+# load the trained agent
+experiment.load(
+    path="./results/PPOTrainer_2022-09-08_16-49-39/PPOTrainer_base_env_770b7_00000_0_2022-09-08_16-49-39/checkpoint_000003/checkpoint-3")
+# %%
+reward = experiment.test()
 # %%
 # plot the rewards of the agent
 plt.plot(reward)
