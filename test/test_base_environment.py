@@ -1,12 +1,12 @@
 # %%
-import unittest
 import random
+import unittest
+
 import gym
-
 import numpy as np
-
-from src.environment.base_environment import BaseEnvironment
 from src.data.data_feed import BaseDataFeed
+
+from env.base_environment import BaseEnvironment
 
 
 class TestBaseEnvironment(unittest.TestCase):
