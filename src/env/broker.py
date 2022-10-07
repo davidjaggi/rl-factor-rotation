@@ -45,7 +45,28 @@ class Broker(ABC):
         portfolio.reset()
         self._record_prices(dt, lob, portfolio)
 
-    def _record_prices(self, dt, prices, portfolio):
-        #TODO: Start here tomorrow
+    def _record_prices(self, portfolio, prices, ):
+        # TODO: Check how we store/manipulate prices
+        if portfolio.dt != prices.dt:
+            raise ValueError(" Mismatch between timestamps of prices and portfolio.")
+
+        self.hist_dict['historical_asset_prices'].append(({'timestamp': portfolio.dt,
+                                                           'prices': prices,}))
+    def _record_position(self, portfolio):
+
+        if type(portfolio).__name__ != 'RL_portfolio':
+
+            self.hist_dict['benchmark']['timestamp'].append(portfolio.dt)
+            self.hist_dict['benchmark']['holdings'].append(portfolio.holdings)
+
+        else:
+
+            self.hist_dict['rl']['timestamp'].append(portfolio.dt)
+            self.hist_dict['rl']['holdings'].append(portfolio.holdings)
+
+
+    def action_to_trades(self, action):
+        #TODO
+
 
 
