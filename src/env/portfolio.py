@@ -31,6 +31,7 @@ class Portfolio(ABC):
         self.holdings = initial_holdings
         self.restrictions = restrictions
         self.start_date = start_date
+        self.dt = start_date
         self.trade_idx = 0 # Trade Counter for testing
 
     def reset(self):
