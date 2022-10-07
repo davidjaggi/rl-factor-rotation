@@ -22,6 +22,7 @@ class Portfolio(ABC):
     Args:
         initial_holdings (dict): Initial holdings of the portfolio, in units of cash and assets.
         restrictions (list): list of boolean methods to apply to self.ideal_weights when rebalancing.
+        start_date (Datetime): Starting date of the portfolio.
     """
 
     def __init__(self, initial_holdings, restrictions, start_date):
