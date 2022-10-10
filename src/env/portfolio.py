@@ -60,6 +60,7 @@ class benchmark_portfolio(Portfolio):
         """
         return date == last_Bday_of_month(date)
 
+
 class RL_portfolio(Portfolio):
 
     def __init__(self, *args, **kwargs):

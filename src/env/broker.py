@@ -64,9 +64,40 @@ class Broker(ABC):
             self.hist_dict['rl']['timestamp'].append(portfolio.dt)
             self.hist_dict['rl']['holdings'].append(portfolio.holdings)
 
+    def rebalance(self, date):
 
-    def action_to_trades(self, action):
-        #TODO
+        if benchmark_portfolio.rebalancing_schedule(date):
+            #rebalance = self.benchmark_portfolio.rebalancing_schedule(self.benchmark_portfolio.dt)
+            shares_to_trade = self.get_trades_for_rebalance()
+            self.hist_dict['benchmark']['timestamp'].append(date) # t+1? ?
+            self.hist_dict['benchmark']['holdings'].append()
+
+        else:
+            pass
+            #("Not the last bday of the month, no rebalancing!!")
+
+
+    def get_trades_for_rebalance(self):
+    #TODO: This function should look at a potrfolio's ideal weights and holdings and output
+    # the necessary trades to rebalance the holdings accordingly
+        ratio = round(self.hist_dict['historical_asset_prices'][-1][0] / (self.hist_dict['historical_asset_prices'][-1][0] +
+                                                                     self.hist_dict['historical_asset_prices'][-1][1]), 2)
+
+        curr_weight = [ratio, 1 - ratio]
+        ideal_weights = [0.5, 0.5]
+        delta = list()
+
+        for a, b in zip(curr_weight, ideal_weights):
+            delta.append(round(a - b, 2))
+
+        self.shares_to_trade = [round(delta[0] * self.hist_dict['benchmark']['holdings'][-1][0],0),
+                           round(delta[1] * self.hist_dict['benchmark']['holdings'][-1][1],0)]
+
+        #TODO: implement the ENV_CONFIG = initial_balance within this function to check if we have enough money to trade (cash within hist_dict)
+
+        return self.shares_to_trade
+
+
 
 
 
