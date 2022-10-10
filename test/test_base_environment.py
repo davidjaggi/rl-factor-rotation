@@ -6,7 +6,7 @@ import gym
 import numpy as np
 from src.data.data_feed import BaseDataFeed
 
-from env.base_environment import BaseEnvironment
+from archive.src.env.base_environment import BaseEnvironment
 
 
 class TestBaseEnvironment(unittest.TestCase):
