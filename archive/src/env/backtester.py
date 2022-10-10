@@ -1,7 +1,7 @@
 from abc import ABC
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 class Backtester(ABC):
