@@ -1,12 +1,10 @@
 from src.env.base_env import BaseEnv
 
-
 def create_env(config):
     # create the environment
     env = BaseEnv(data_feed=config["data_feed"], config=config["config"],
                   rebalance_schedule=config["rebalance_schedule"])
     return env
-
 
 # %%
 if __name__ == "__main__":
