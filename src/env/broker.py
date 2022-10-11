@@ -15,7 +15,7 @@ class Broker(ABC):
         self.data_feed = data_feed
         self.benchmark_portfolio = None
         self.rl_portfolio = None
-        self.hist_dict = {'benchmark': {'timestamp': [], 'holdings': []},
+        self.hist_dict = {'benchmark': {'timestamp': [], 'holdings': [], 'cash': []},
                           'rl': {'timestamp': [], 'holdings': []},
                           'historical_asset_prices': []}
         self.trade_logs = {'benchmark_portfolio': [],
@@ -67,10 +67,22 @@ class Broker(ABC):
     def rebalance(self, date):
 
         if benchmark_portfolio.rebalancing_schedule(date):
-            #rebalance = self.benchmark_portfolio.rebalancing_schedule(self.benchmark_portfolio.dt)
-            shares_to_trade = self.get_trades_for_rebalance()
-            self.hist_dict['benchmark']['timestamp'].append(date) # t+1? ?
-            self.hist_dict['benchmark']['holdings'].append()
+
+            self.shares_to_trade = get_trades_for_rebalance()
+            self.cash_delta = self.shares_to_trade[0]*self.hist_dict['historical_asset_prices'][-1][0]+\
+                              self.shares_to_trade[1]*self.hist_dict['historical_asset_prices'][-1][1]
+
+            if len(self.hist_dict['benchmark']['cash'][-1]) != 0:
+                self.hist_dict['benchmark']['cash'].append(self.hist_dict['benchmark']['cash'][-1]*self.cash_delta-
+                                                           trx_cost*(abs(shares_to_trade[0])+abs(shares_to_trade[0])))
+            else:
+                self.hist_dict['benchmark']['cash'].append(10000 * self.cash_delta-
+                                                           trx_cost*(abs(shares_to_trade[0])+abs(shares_to_trade[0])))
+
+            self.hist_dict['benchmark']['timestamp'].append(date)
+            self.new_holdings = [self.hist_dict['benchmark']['holdings'][-1][0]+shares_to_trade[0],
+                                 self.hist_dict['benchmark']['holdings'][-1][1]+shares_to_trade[1]]
+            self.hist_dict['benchmark']['holdings'].append(self.new_holdings)
 
         else:
             pass
@@ -95,7 +107,7 @@ class Broker(ABC):
 
         #TODO: implement the ENV_CONFIG = initial_balance within this function to check if we have enough money to trade (cash within hist_dict)
 
-        return self.shares_to_trade
+        return shares_to_trade
 
 
 
