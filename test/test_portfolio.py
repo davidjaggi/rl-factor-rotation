@@ -1,4 +1,3 @@
-# %%
 import random
 import unittest
 
@@ -6,11 +5,10 @@ import numpy as np
 
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
-from src.env.base_env import BaseEnv
+from src.env.portfolio import Portfolio
 from src.utils.load_path import load_data_path
 
 DATA_PATH = load_data_path()
-# %%
 
 ENV_CONFIG = {
     "initial_balance": 10000,
@@ -26,23 +24,15 @@ ENV_CONFIG = {
 }
 
 
-class TestBaseEnv(unittest.TestCase):
+class TestPortfolio(unittest.TestCase):
     def setUp(self) -> None:
         random.seed(1)
         self.feed = CSVDataFeed(
             DATA_PATH + "/example_data.csv"
         )
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
-        self.env = BaseEnv(
-            self.feed, config=ENV_CONFIG, rebalance_schedule=self.rebalancing_schedule
-        )
+        self.portfolio = Portfolio([0.5, 0.5], None, "2022-01-01")
 
     def test_reset(self):
-        self.env.reset()
-        pass
-
-    def test_step(self):
-        self.env.reset()
-        action = self.env.action_space.sample()
-        obs, rew, done, _ = self.env.step(action)
-        pass
+        self.portfolio.reset()
+        assert self.portfolio.trade_idx == 0
