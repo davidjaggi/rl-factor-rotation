@@ -17,6 +17,11 @@ class BaseIndicator(object):
 
 
 class MovingAverage(BaseIndicator):
+    """
+    Moving Average Class
+
+    """
+
     def __init__(self, window):
         self.window = window
 
