@@ -6,6 +6,7 @@ import numpy as np
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.broker import Broker
+from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.utils.load_path import load_data_path
 
 DATA_PATH = load_data_path()
@@ -36,3 +37,9 @@ class TestBroker(unittest.TestCase):
     def test_reset(self):
         self.broker.reset()
         pass
+
+    def test_assign_portfolios(self):
+        self.broker.benchmark_portfolio = BenchmarkPortfolio([0.5, 0.5], None, "2000-01-01")
+        self.broker.rl_portfolio = RLPortfolio([0.5, 0.5], None, "2000-01-01")
+        assert self.broker.benchmark_portfolio is not None
+        assert self.broker.rl_portfolio is not None

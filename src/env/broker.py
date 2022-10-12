@@ -22,10 +22,10 @@ class Broker(ABC):
         dt, lob = self.data_feed.next_prices_snapshot()
 
         # reset the Broker logs
-        if type(portfolio).__name__ != 'RL_portfolio':
+        if type(portfolio).__name__ != 'rl_portfolio':
             self.hist_dict['benchmark']['timestamp'] = []
             self.hist_dict['benchmark']['holdings'] = []
-            self.trade_logs['benchmark_portfolio']= []
+            self.trade_logs['benchmark_portfolio'] = []
             self.current_dt_bmk = dt
 
         else:

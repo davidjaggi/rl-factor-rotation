@@ -36,3 +36,31 @@ class TestPortfolio(unittest.TestCase):
     def test_reset(self):
         self.portfolio.reset()
         assert self.portfolio.trade_idx == 0
+
+
+class TestBenchmarkPortfolio(unittest.TestCase):
+    def setUp(self) -> None:
+        random.seed(1)
+        self.feed = CSVDataFeed(
+            DATA_PATH + "/example_data.csv"
+        )
+        self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
+        self.portfolio = Portfolio([0.5, 0.5], None, "2022-01-01")
+
+    def test_reset(self):
+        self.portfolio.reset()
+        assert self.portfolio.trade_idx == 0
+
+
+class TestRLPortfolio(unittest.TestCase):
+    def setUp(self) -> None:
+        random.seed(1)
+        self.feed = CSVDataFeed(
+            DATA_PATH + "/example_data.csv"
+        )
+        self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
+        self.portfolio = Portfolio([0.5, 0.5], None, "2022-01-01")
+
+    def test_reset(self):
+        self.portfolio.reset()
+        assert self.portfolio.trade_idx == 0

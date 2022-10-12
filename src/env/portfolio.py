@@ -1,15 +1,7 @@
-import math
-import copy
-import numpy as np
-from datetime import datetime, date
 from pandas.tseries.offsets import BMonthEnd
 
 offset = BMonthEnd()
 
-
-from decimal import Decimal
-from random import randint
-import random
 from abc import ABC
 
 
@@ -48,11 +40,11 @@ class Portfolio(ABC):
         """
         raise NotImplementedError
 
-class benchmark_portfolio(Portfolio):
+class BenchmarkPortfolio(Portfolio):
 
     def __init__(self, *args, **kwargs):
-        super(benchmark_portfolio, self).__init__(*args, **kwargs)
-        self.ideal_weights = [0.5,0.5]
+        super(BenchmarkPortfolio, self).__init__(*args, **kwargs)
+        self.ideal_weights = [0.5, 0.5]
 
     def rebalancing_schedule(self, date):
         """
@@ -61,11 +53,11 @@ class benchmark_portfolio(Portfolio):
         return date == last_Bday_of_month(date)
 
 
-class RL_portfolio(Portfolio):
+class RLPortfolio(Portfolio):
 
     def __init__(self, *args, **kwargs):
-        super(RL_portfolio, self).__init__(*args, **kwargs)
-        self.ideal_weights = [0.5,0.5]
+        super(RLPortfolio, self).__init__(*args, **kwargs)
+        self.ideal_weights = [0.5, 0.5]
 
     def rebalancing_schedule(self, date):
         """
