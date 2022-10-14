@@ -31,7 +31,16 @@ class TestPortfolio(unittest.TestCase):
             DATA_PATH + "/example_data.csv"
         )
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
-        self.portfolio = Portfolio([0.5, 0.5], None, "2022-01-01")
+        test_dict = {
+            'name': 'benchmark_portfolio',
+            'type': "equally_weighted",
+            'initial_balance': 1000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule
+        }
+        self.portfolio = Portfolio(test_dict)
 
     def test_reset(self):
         self.portfolio.reset()
@@ -45,7 +54,16 @@ class TestBenchmarkPortfolio(unittest.TestCase):
             DATA_PATH + "/example_data.csv"
         )
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
-        self.portfolio = Portfolio([0.5, 0.5], None, "2022-01-01")
+        bench_dict = {
+            'name': 'benchmark_portfolio',
+            'type': "equally_weighted",
+            'initial_balance': 1000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule
+        }
+        self.portfolio = Portfolio(bench_dict)
 
     def test_reset(self):
         self.portfolio.reset()
@@ -59,7 +77,16 @@ class TestRLPortfolio(unittest.TestCase):
             DATA_PATH + "/example_data.csv"
         )
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
-        self.portfolio = Portfolio([0.5, 0.5], None, "2022-01-01")
+        rl_dict = {
+            'name': 'rl_portfolio',
+            'type': None,
+            'initial_balance': 1000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule
+        }
+        self.portfolio = Portfolio(rl_dict)
 
     def test_reset(self):
         self.portfolio.reset()
