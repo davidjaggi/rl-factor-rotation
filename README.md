@@ -34,4 +34,8 @@ The experiment class contains the code for the experiment.
 
 Tasks and open todos can be seen in the [Projects section](https://github.zhaw.ch/davidjaggi/rl-factor-rotation/projects/1).
 
-
+- [ ] Write function to get value of the portfolio
+- [ ] Adjust existing code to get correct shares to trade
+- [ ] Adjust code to guarantee to get correct values depending on assets.
+- [ ] Reset data feed function
+- [ ] Implement initial rebalance
