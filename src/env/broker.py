@@ -11,6 +11,7 @@ class Broker(ABC):
         self.config = config
         self.benchmark_portfolio = self.config['benchmark_portfolio']
         self.rl_portfolio = self.config['rl_portfolio']
+        self.transaction_cost = self.config['transaction_cost']
         self.hist_dict = self._create_hist_dict()
         self.trade_logs = self._create_trade_log()
 
