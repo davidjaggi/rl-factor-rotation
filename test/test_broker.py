@@ -9,8 +9,6 @@ from src.utils.load_path import load_data_path
 
 DATA_PATH = load_data_path()
 
-
-
 class TestBroker(unittest.TestCase):
     def setUp(self) -> None:
         random.seed(1)
@@ -18,25 +16,28 @@ class TestBroker(unittest.TestCase):
             DATA_PATH + "/example_data.csv"
         )
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
-        config = {
-            "rl_portfolio": {
-                'name': 'rl_portfolio',
-                'type': None,
-                'initial_balance': 1000,
-                'initial_weights': [0.5, 0.5],
-                'restrictions': dict(),
-                'start_date': '2020-02-24',
-                'schedule': self.rebalancing_schedule
-            },
-            "benchmark_portfolio": {
-                'name': 'benchmark_portfolio',
-                'type': "equally_weighted",
-                'initial_balance': 1000,
-                'initial_weights': [0.5, 0.5],
-                'restrictions': dict(),
-                'start_date': '2020-02-24',
-                'schedule': self.rebalancing_schedule
-            },
+        bench_config = {
+            'name': 'benchmark_portfolio',
+            'type': "equally_weighted",
+            'initial_balance': 1000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule
+        }
+        rl_config = {
+            'name': 'rl_portfolio',
+            'type': None,
+            'initial_balance': 1000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule
+        }
+
+        broker_config = {
+            "rl_portfolio": RLPortfolio(rl_config),
+            "benchmark_portfolio": BenchmarkPortfolio(bench_config),
             "start_date": "2018-12-31",
             "end_date": "2020-12-31",
             "busday_offset_start": 250,
@@ -44,7 +45,7 @@ class TestBroker(unittest.TestCase):
             "reward_scaling": 1,
             "obs_price_hist": 5,
         }
-        self.broker = Broker(self.feed, config)
+        self.broker = Broker(self.feed, broker_config)
 
     def test_reset(self):
         self.broker.reset()
