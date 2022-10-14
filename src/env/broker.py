@@ -5,16 +5,25 @@ class Broker(ABC):
     """ Broker class
     Args:
     """
-    def __init__(self, data_feed,):
+
+    def __init__(self, data_feed, config):
         self.data_feed = data_feed
-        self.benchmark_portfolio = None
-        self.rl_portfolio = None
-        self.hist_dict = {'benchmark':
-                              {'timestamp': [], 'holdings': [], 'cash': []},
-                          'rl': {'timestamp': [], 'holdings': []},
-                          'historical_asset_prices': []}
-        self.trade_logs = {'benchmark_portfolio': [],
-                           'rl_portfolio': []}
+        self.config = config
+        self.benchmark_portfolio = self.config['benchmark_portfolio']
+        self.rl_portfolio = self.config['rl_portfolio']
+        self.transaction_cost = self.config['transaction_cost']
+        self.hist_dict = self._create_hist_dict()
+        self.trade_logs = self._create_trade_log()
+
+    def _create_hist_dict(self):
+        return {'benchmark':
+                    {'timestamp': [], 'holdings': [], 'cash': []},
+                'rl': {'timestamp': [], 'holdings': []},
+                'historical_asset_prices': []}
+
+    def _create_trade_log(self):
+        return {'benchmark_portfolio': [],
+                'rl_portfolio': []}
 
     def reset(self, portfolio):
         """ Resetting the Broker class """
