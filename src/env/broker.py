@@ -13,17 +13,15 @@ class Broker(ABC):
         self.rl_portfolio = self.config['rl_portfolio']
         self.transaction_cost = self.config['transaction_cost']
         self.hist_dict = self._create_hist_dict()
-        self.trade_logs = self._create_trade_log()
+        self.trade_logs = self._create_trade_logs()
 
 
     def _create_hist_dict(self):
-        return {'benchmark':
-                    {'timestamp': [], 'holdings': [], 'cash': []},
-                'rl': {'timestamp': [], 'holdings': []},
-                'historical_asset_prices': []}
+        return {'benchmark_portfolio':{'timestamp': [], 'holdings': [], 'cash': []},
+                       'rl_portfolio':{'timestamp': [], 'holdings': [], 'cash': []}, 'historical_asset_prices': []}
 
 
-    def _create_trade_log(self):
+    def _create_trade_logs(self):
         return {'benchmark_portfolio': [],
                 'rl_portfolio': []}
 
@@ -31,7 +29,7 @@ class Broker(ABC):
     def reset(self, portfolio):
         """ Resetting the Broker class """
         self.data_feed.reset(time=portfolio.start_time)
-        dt, lob = self.data_feed.next_prices_snapshot()
+        dt, prices = self.data_feed.next_prices_snapshot()
 
         # reset the Broker logs
         if type(portfolio).__name__ != 'rl_portfolio':
@@ -49,7 +47,7 @@ class Broker(ABC):
 
         # update to the first instance of the datafeed & record this
         portfolio.reset()
-        self._record_prices(dt, lob, portfolio)
+        self._record_prices(portfolio, prices)
 
 
     def _record_prices(self, portfolio, prices):

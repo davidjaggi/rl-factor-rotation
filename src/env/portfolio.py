@@ -19,6 +19,7 @@ class Portfolio(ABC):
 
     def __init__(self, config):
         # TODO: extract all variables of the config to the init method
+        self.initial_balance = config["initial_balance"]
         self.balance = config["initial_balance"]
         self.initial_weights = config["initial_weights"]
         self.restrictions = config["restrictions"]
@@ -28,11 +29,13 @@ class Portfolio(ABC):
         self.type = config["type"]
         self.trade_idx = 0  # Trade Counter for testing
 
-    def reset(self):
+    def reset(self, start_date, prices):
         """"
         reset method of the Portfolio class.
         """
-        # TODO: Do we need to reset more parameters?
+        self.balance = self.initial_balance
+        self.positions = self._initial_rebalance(prices)
+        self.dt = start_date
         self.trade_idx = 0
 
     def _check_rebalance(self, date):
@@ -46,6 +49,24 @@ class Portfolio(ABC):
             return last_Bday_of_month(date) == date
         else:
             raise NotImplementedError
+
+    def _initial_rebalance(self, prices):
+        """Calculate the initial positions of the portfolio (without transaction costs for now)
+
+
+        """
+        positions = {}
+
+        if self.type == "equally_weighted":
+            number_of_assets = len(prices)
+            for asset, price in enumerate(prices):
+                positions[asset] = round((self.balance/number_of_assets)/price, 0)
+                # Check if we have enough initial balance to initiate the position
+                if positions[asset] > 0:
+                    self.balance = self.balance - positions[asset]*price
+
+        return positions
+
 
 
 class BenchmarkPortfolio(Portfolio):
