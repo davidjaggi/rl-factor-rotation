@@ -2,28 +2,51 @@
 import random
 import unittest
 
-import numpy as np
-
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.base_env import BaseEnv
+from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.utils.load_path import load_data_path
 
 DATA_PATH = load_data_path()
 # %%
 
-ENV_CONFIG = {
-    "initial_balance": 10000,
-    "initial_weights": np.array([0.5, 0.5]),
-    "benchmark_type": "custom",
-    "benchmark_wgts": np.array([0.5, 0.5]),
-    "start_date": "2018-12-31",
-    "end_date": "2020-12-31",
-    "busday_offset_start": 250,
-    "cost_pct": 0.0005,
-    "reward_scaling": 1,
-    "obs_price_hist": 5,
+config = {
+    'benchmark_portfolio': {
+        'name': 'benchmark_portfolio',
+        'type': "equally_weighted",
+        'initial_balance': 10000,
+        'initial_weights': [0.5, 0.5],
+        'restrictions': dict(),
+        'start_date': '2020-02-24',
+        'schedule': PeriodicSchedule(frequency="WOM-3FRI")
+    },
+    'rl_portfolio': {
+        'name': 'rl_portfolio',
+        'type': None,
+        'initial_balance': 10000,
+        'initial_weights': [0.5, 0.5],
+        'restrictions': dict(),
+        'start_date': '2020-02-24',
+        'schedule': PeriodicSchedule(frequency="WOM-3FRI")
+    },
+    'broker': {
+        "rl_portfolio": None,
+        "benchmark_portfolio": None,
+        "start_date": "2018-12-31",
+        "end_date": "2020-12-31",
+        "busday_offset_start": 250,
+        "transaction_cost": 0.0005
+    },
+    'agent': {
+        "reward_scaling": 1,
+        "obs_price_hist": 5,
+    }
 }
+
+# Specify the portfolio configurations
+config['broker']['rl_portfolio'] = RLPortfolio(config['rl_portfolio'])
+config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_portfolio'])
 
 
 class TestBaseEnv(unittest.TestCase):
@@ -32,17 +55,15 @@ class TestBaseEnv(unittest.TestCase):
         self.feed = CSVDataFeed(
             DATA_PATH + "/example_data.csv"
         )
-        self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
-        self.env = BaseEnv(
-            self.feed, config=ENV_CONFIG, rebalance_schedule=self.rebalancing_schedule
-        )
+        self.env = BaseEnv(config=config, data_feed=self.feed, indicator_pipeline=None)
 
     def test_reset(self):
         self.env.reset()
-        pass
+        assert self.env.day == 0
+        print(self.env.broker)
 
     def test_step(self):
-        self.env.reset()
-        action = self.env.action_space.sample()
-        obs, rew, done, _ = self.env.step(action)
+        # self.env.reset()
+        # action = self.env.action_space.sample()
+        # obs, rew, done, _ = self.env.step(action)
         pass

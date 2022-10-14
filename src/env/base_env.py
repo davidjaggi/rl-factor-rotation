@@ -1,24 +1,13 @@
 from abc import ABC
-from datetime import timedelta
 
 import gym
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from gym.utils import seeding
 
-from src.data.rebalancing_schedule import RebalancingSchedule
-
-BASE_CONFIG = {
-    "initial_balance": 10000,
-    "benchmark_type": "equally_weighted",
-    "benchmark_wgts": np.array([0.5, 0.5]),
-    "start_date": "2018-12-31",
-    "end_date": "2020-12-31",
-    "busday_offset_start": 250,
-    "cost_pct": 0.0005,
-    "reward_scaling": 1,
-    "obs_price_hist": 5,
-}
+from src.env.broker import Broker
+from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 
 
 class BaseEnv(gym.Env, ABC):
@@ -27,52 +16,52 @@ class BaseEnv(gym.Env, ABC):
     """
 
     def __init__(
-            self, data_feed, config={}, rebalance_schedule=None, indicator_pipeline=None
+            self, config=None, data_feed=None, indicator_pipeline=None
     ):
         """Initialises the class"""
-
+        self.config = config
         self.data_feed = data_feed
-        self.rebalance_schedule = rebalance_schedule
-        self.config = {**BASE_CONFIG, **config}
         self.indicator_pipeline = indicator_pipeline
 
-        self.observation_space = self.build_observation_space()
+        # self.observation_space = self.build_observation_space()
         self.action_space = self.build_action_space()
 
-        self.initial_balance = self.config["initial_balance"]
-        self.cost_pct = self.config["cost_pct"]
-        self.reward_scaling = self.config["reward_scaling"]
-        self.obs_price_hist = self.config["obs_price_hist"]
+        # initialize the broker and the portfolios
+        self.broker = Broker(config=self.config["broker"], data_feed=self.data_feed)
+        self.rl_portfolio = RLPortfolio(self.config["rl_portfolio"])
+        self.benchmark_portfolio = BenchmarkPortfolio(self.config["benchmark_portfolio"])
+
+        self.reward_scaling = self.config['agent']["reward_scaling"]
+        self.obs_price_hist = self.config['agent']["obs_price_hist"]
 
         # set start and end date as well as rebalancing periods...
-        if isinstance(self.rebalance_schedule, list):
-            self.start_date = self.rebalance_schedule[0].strftime("%Y-%m-%d")
-            self.end_date = self.rebalance_schedule[-1].strftime("%Y-%m-%d")
-            self.rebalance_periods = self.rebalance_schedule
-        else:
-            self.start_date = self.config["start_date"]
-            self.end_date = self.config["end_date"]
-
-        self.data_feed.reset_feed(
-            start_dt=(
-                    pd.to_datetime(self.start_date)
-                    - timedelta(days=self.config["busday_offset_start"])
-            ).strftime("%Y-%m-%d"),
-            end_dt=self.end_date,
-        )
-        if self.rebalance_schedule is None:
-            self.rebalance_periods = [
-                idx
-                for idx in self.data_feed.get_data_idx()
-                if idx >= pd.to_datetime(self.start_date)
-            ]
-        if isinstance(self.rebalance_schedule, RebalancingSchedule):
-            self.rebalance_schedule.set_start_and_end(
-                start_date=self.start_date, end_date=self.end_date
-            )
-            schedule = self.rebalance_schedule.schedule()
-            self.rebalance_periods = schedule
-
+        # if isinstance(self.rebalance_schedule, list):
+        #     self.start_date = self.rebalance_schedule[0].strftime("%Y-%m-%d")
+        #     self.end_date = self.rebalance_schedule[-1].strftime("%Y-%m-%d")
+        #     self.rebalance_periods = self.rebalance_schedule
+        # else:
+        #     self.start_date = self.config["start_date"]
+        #     self.end_date = self.config["end_date"]
+        #
+        # self.data_feed.reset_feed(
+        #     start_dt=(
+        #             pd.to_datetime(self.start_date)
+        #             - timedelta(days=self.config["busday_offset_start"])
+        #     ).strftime("%Y-%m-%d"),
+        #     end_dt=self.end_date,
+        # )
+        # if self.rebalance_schedule is None:
+        #     self.rebalance_periods = [
+        #         idx
+        #         for idx in self.data_feed.get_data_idx()
+        #         if idx >= pd.to_datetime(self.start_date)
+        #     ]
+        # if isinstance(self.rebalance_schedule, RebalancingSchedule):
+        #     self.rebalance_schedule.set_start_and_end(
+        #         start_date=self.start_date, end_date=self.end_date
+        #     )
+        #     schedule = self.rebalance_schedule.schedule()
+        #     self.rebalance_periods = schedule
         self._seed()
 
     def reset(self):
@@ -86,22 +75,24 @@ class BaseEnv(gym.Env, ABC):
         self.cost = 0
         self.trades = 0
         self.episode = 0
-        self.current_holdings = np.zeros(self.data_feed.num_assets)
-        self.current_weights = self.config["initial_weights"]
-        self.current_holdings_bmk = np.zeros(self.data_feed.num_assets)
+        # self.current_holdings = np.zeros(self.data_feed.num_assets)
+        # self.current_weights = self.config["initial_weights"]
+        # self.current_holdings_bmk = np.zeros(self.data_feed.num_assets)
 
         # memorize changes
-        self.asset_memory = [self.initial_balance]
-        self.bmk_memory = [self.initial_balance]
-        self.date_memory = [self.rebalance_periods[0]]
+        # self.asset_memory = [self.initial_balance]
+        # self.bmk_memory = [self.initial_balance]
+        # self.date_memory = [self.rebalance_periods[0]]
         self.rewards_memory = []
         self.actions_memory = []
         self.weights_memory = []
         self.trades_memory = []
 
+        # reset broker
+        self.broker.reset(self.benchmark_portfolio)
         # initialize state
-        self.state = self.build_observation(self.rebalance_periods[self.day])
-        return self.state
+        # self.state = self.build_observation(self.rebalance_periods[self.day])
+        # return self.state
 
     def build_observation(self, date):
         """ Builds the observation space """
@@ -275,9 +266,10 @@ class BaseEnv(gym.Env, ABC):
         return gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
+            # TODO get the number of assets from the broker class
             shape=(
-                self.config["obs_price_hist"] * self.data_feed.num_assets
-                + self.data_feed.num_assets
+                self.config["obs_price_hist"] * 2
+                + 2
                 + 1,
             ),
             dtype=np.float64
@@ -295,36 +287,35 @@ class BaseEnv(gym.Env, ABC):
         reward = self.current_ptf_values[-1] - self.current_ptf_values_bmk[-1]
         return reward
 
-
-if __name__ == "__main__":
-    from src.data.rebalancing_schedule import PeriodicSchedule
-    from src.data.feed import CSVDataFeed
-    import matplotlib.pyplot as plt
-
-    feed = CSVDataFeed(file_name="../../data/example_data.csv")
-
-    ENV_CONFIG = {
-        "initial_balance": 10000,
-        "initial_weights": np.array([0.5, 0.5]),
-        "benchmark_type": "custom",
-        "benchmark_wgts": np.array([0.5, 0.5]),
-        "start_date": "2018-12-31",
-        "end_date": "2020-12-31",
-        "busday_offset_start": 250,
-        "cost_pct": 0.0005,
-        "reward_scaling": 1,
-        "obs_price_hist": 5,
-    }
-
-    # now try a different rebalancing frequency...
-    schedule = PeriodicSchedule(frequency="WOM-3FRI")
-
-    env = BaseEnv(data_feed=feed, config=ENV_CONFIG, rebalance_schedule=schedule)
-    obs = env.reset()
-    done = False
-    while not done:
-        # implement simple agent
-        action = env.action_space.sample()
-        obs, rew, done, _ = env.step(action)
-    env.plot_current_performance()
-    plt.show()
+# if __name__ == "__main__":
+#     from src.data.rebalancing_schedule import PeriodicSchedule
+#     from src.data.feed import CSVDataFeed
+#     import matplotlib.pyplot as plt
+#
+#     feed = CSVDataFeed(file_name="../../data/example_data.csv")
+#
+#     ENV_CONFIG = {
+#         "initial_balance": 10000,
+#         "initial_weights": np.array([0.5, 0.5]),
+#         "benchmark_type": "custom",
+#         "benchmark_wgts": np.array([0.5, 0.5]),
+#         "start_date": "2018-12-31",
+#         "end_date": "2020-12-31",
+#         "busday_offset_start": 250,
+#         "cost_pct": 0.0005,
+#         "reward_scaling": 1,
+#         "obs_price_hist": 5,
+#     }
+#
+#     # now try a different rebalancing frequency...
+#     schedule = PeriodicSchedule(frequency="WOM-3FRI")
+#
+#     env = BaseEnv(data_feed=feed, config=ENV_CONFIG, rebalance_schedule=schedule)
+#     obs = env.reset()
+#     done = False
+#     while not done:
+#         # implement simple agent
+#         action = env.action_space.sample()
+#         obs, rew, done, _ = env.step(action)
+#     env.plot_current_performance()
+#     plt.show()
