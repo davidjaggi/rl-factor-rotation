@@ -33,12 +33,13 @@ class TestPortfolio(unittest.TestCase):
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
         test_dict = {
             'name': 'benchmark_portfolio',
-            'type': "equally_weighted",
+            'initial_positions': "equally_weighted",
             'initial_balance': 1000,
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': 'equally_weigthed'
         }
         self.portfolio = Portfolio(test_dict)
 
@@ -56,12 +57,13 @@ class TestBenchmarkPortfolio(unittest.TestCase):
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
         bench_dict = {
             'name': 'benchmark_portfolio',
-            'type': "equally_weighted",
+            'initial_positions': "equally_weighted",
             'initial_balance': 1000,
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': 'equally_weigthed'
         }
         self.portfolio = Portfolio(bench_dict)
 
@@ -79,12 +81,13 @@ class TestRLPortfolio(unittest.TestCase):
         self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
         rl_dict = {
             'name': 'rl_portfolio',
-            'type': None,
+            'initial_positions': 'equally_weighted',
             'initial_balance': 1000,
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': 'equally_weigthed'
         }
         self.portfolio = Portfolio(rl_dict)
 

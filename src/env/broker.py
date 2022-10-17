@@ -1,5 +1,5 @@
 from abc import ABC
-
+from src.env.portfolio import Portfolio
 
 class Broker(ABC):
     """ Broker class
@@ -26,9 +26,9 @@ class Broker(ABC):
                 'rl_portfolio': []}
 
 
-    def reset(self, portfolio):
+    def reset(self, portfolio : Portfolio):
         """ Resetting the Broker class """
-        self.data_feed.reset(time=portfolio.start_time)
+        self.data_feed.reset(time=portfolio.start_date)
         dt, prices = self.data_feed.next_prices_snapshot()
 
         # reset the Broker logs
@@ -46,7 +46,7 @@ class Broker(ABC):
             self.current_dt_rl = dt
 
         # update to the first instance of the datafeed & record this
-        portfolio.reset()
+        portfolio.reset(portfolio.start_date, prices)
         self._record_prices(portfolio, prices)
 
 
@@ -60,100 +60,94 @@ class Broker(ABC):
                                                            'prices': prices, }))
 
 
-    def _record_position(self, portfolio):
-        """ Record the position of the portfolio and append it to the hist dict for the correct portfolio """
-        if type(portfolio).__name__ != 'RL_portfolio':
+    def _record_positions(self, portfolio):
+        """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
+        if type(portfolio).__name__ != 'RLPortfolio':
 
             self.hist_dict['benchmark']['timestamp'].append(portfolio.dt)
             self.hist_dict['benchmark']['holdings'].append(portfolio.holdings)
+            self.hist_dict['benchmark']['cash'] = portfolio.cash_position
 
         else:
 
             self.hist_dict['rl']['timestamp'].append(portfolio.dt)
             self.hist_dict['rl']['holdings'].append(portfolio.holdings)
+            self.hist_dict['rl']['cash'] = portfolio.cash_position
 
-
-    def rebalance(self, date):
-
+    def rebalance(self, date, prices):
+        # We first rebalance the benchmark portfolio
         if self.benchmark_portfolio.rebalancing_schedule(date):
 
-            self.shares_to_trade = self.get_trades_for_rebalance()
+            rebalance_dict = self.get_trades_for_rebalance(self.benchmark_portfolio, prices)
 
-            self.cash_google = self.shares_to_trade[0] * self.hist_dict['historical_asset_prices']['GOOGLE'][-1]
-            self.cash_apple = self.shares_to_trade[1] * self.hist_dict['historical_asset_prices']['APPLE'][-1]
+            # Now we need to see whether we can carry out the proposed transactions given our cash balance (remember the transaction shares are rounded)
 
-            if self.cash_google > 0:
-                if self.cash_apple * -1 + self.hist_dict['benchmark']['cash'][-1] > self.cash_google:
-                    pass
+            incoming_cash = 0
+            outgoing_cash = 0
+
+            for asset, transaction in enumerate(rebalance_dict):
+                if transaction['transaction_shares'] < 0:
+                    incoming_cash += -transaction['transaction_shares']*prices[asset] #TODO: Transaction costs should be accounted for in this line(s)
                 else:
-                    self.nr_shares_g = self.nr_shares_g - (self.cash_google + self.cash_apple - self.hist_dict['benchmark']['cash'][-1]) / \
-                                  self.hist_dict['historical_asset_prices']['GOOGLE'][-1]
-                    self.shares_to_trade = [round(self.nr_shares_g, 0), round(self.nr_shares_a, 0)]
-                    self.cash_google = self.shares_to_trade[0] * self.hist_dict['historical_asset_prices']['GOOGLE'][-1]
+                    outgoing_cash += transaction['transaction_shares']*prices[asset]
 
+            if incoming_cash + self.benchmark_portfolio.cash_position > outgoing_cash:
+                # We have enough capital to carry out the rebalance, we carry out the trades and update our cash and positions
+                for asset, transaction in enumerate(rebalance_dict):
+                    self.benchmark_portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
+
+                self.benchmark_portfolio.cash_position += incoming_cash - outgoing_cash
             else:
-                if self.cash_google * -1 + self.hist_dict['benchmark']['cash'][-1] > self.cash_apple:
-                    pass
-                else:
-                    self.nr_shares_a = self.nr_shares_a - (self.cash_apple + self.cash_google - self.hist_dict['benchmark']['cash'][-1]) / \
-                                  self.hist_dict['historical_asset_prices']['APPLE'][-1]
-                    self.shares_to_trade = [round(self.nr_shares_g, 0), round(self.nr_shares_a, 0)]
-                    self.cash_apple = self.shares_to_trade[1] * self.hist_dict['historical_asset_prices']['APPLE'][-1]
+                # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
+                for asset, transaction in enumerate(rebalance_dict):
+                    if transaction['transaction_shares'] > 0:
+                        # We need to scale down this purchase
+                        rebalance_dict[asset]['transaction_shares'] += -(outgoing_cash - (incoming_cash + self.benchmark_portfolio.cash_position))/prices[asset]
+                        # Update the outgoing cash
+                        outgoing_cash = rebalance_dict[asset]['transaction_shares']*prices[asset]
+                #TODO: Currently this only works when ONLY 1 ASSET is sold, to generalize this we would have to implement a "scale down method".
 
-            self.cash_delta = self.cash_google + self.cash_apple
+                for asset, transaction in enumerate(rebalance_dict):
+                    self.benchmark_portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
 
-            self.hist_dict['benchmark']['cash'].append(self.hist_dict['benchmark']['cash'][-1] - self.cash_delta -
-                                                  self.trx_cost * (abs(self.shares_to_trade[0]) + abs(self.shares_to_trade[1])))
+                self.benchmark_portfolio.cash_position += incoming_cash - outgoing_cash
 
-            self.hist_dict['benchmark']['timestamp'].append(date)
+            #TODO: We need to decide what to do if the cash position left here is big, maybe increase the buying transactions? Otherwise it may start building up during the simulation
 
-            self.new_holdings_g = self.hist_dict['benchmark']['holdings']['GOOGLE'][-1] + self.shares_to_trade[0]
-            self.new_holdings_a = self.hist_dict['benchmark']['holdings']['APPLE'][-1] + self.shares_to_trade[1]
-
-            self.hist_dict['benchmark']['holdings']['GOOGLE'].append(self.new_holdings_g)
-            self.hist_dict['benchmark']['holdings']['APPLE'].append(self.new_holdings_a)
+        if self.benchmark_portfolio.rebalancing_schedule(date):
+            #TODO: Start here
 
 
-        else:
-            pass
-            #("Not the last bday of the month, no rebalancing!!")
+    def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
+        """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
+        ideal_weights and rebalancing_type.
+        """
+        #TODO: If instead of copying the ideal_weights we want to use them as a signal to trade, that should be implemented here. Right now the difference between weights determines the transaction.
+
+        portfolio_values, portfolio_weights = self.get_portfolio_value_and_weights(portfolio, prices)
+
+        # Now that we have the portfolio weights we calculate the delta (difference) between the ideal weight of
+        # each position and its current weight
+        rebalance_dict = {}
+
+        for asset, weight in portfolio_weights:
+            transaction_currency_value = (portfolio_weights[asset] - portfolio.ideal_weights[asset])*portfolio_values['total_value']
+            rebalance_dict[asset] = {'transaction_value': transaction_currency_value,
+                                 'transaction_shares': int(transaction_currency_value/prices[asset])}
+
+        return rebalance_dict
 
 
-    def get_trades_for_rebalance(self):
-    #TODO: This function should look at a potrfolio's ideal weights and holdings and output
-    # the necessary trades to rebalance the holdings accordingly
+    def get_portfolio_value_and_weights(self, portfolio, prices):
+        portfolio_values = {}
+        portfolio_weights = {}
+        for asset, position in enumerate(portfolio.positions):
+            portfolio_values[asset] = position * prices[asset]
 
-        self.portfolio_value = self.get_portfolio_value() #
+        portfolio_values['total_value'] = sum(portfolio.values())
 
-        self.ratio = (self.portfolio_value['GOOGLE']) / (self.portfolio_value['GOOGLE'] + self.portfolio_value['APPLE'])
+        for asset, position_value in enumerate(portfolio_values):
+            portfolio_weights[asset] = round(portfolio_values[asset]/portfolio_values['total_value'],2)
 
-        self.curr_weight = [ratio, 1 - ratio]
-        self.ideal_weights = [0.5, 0.5]
-        self.delta = list()
-
-        for a, b in zip(self.curr_weight, self.ideal_weights):
-            self.delta.append((a * -1) - (b * -1))
-
-        self.delta_portfolio_value = self.portfolio_value['GOOGLE'] - self.portfolio_value['APPLE']
-
-        if self.delta_portfolio_value > 0:
-            self.nr_shares_g = self.delta_portfolio_value / 2 / self.hist_dict['historical_asset_prices']['GOOGLE'][-1] * -1
-            self.nr_shares_a = self.delta_portfolio_value / 2 / self.hist_dict['historical_asset_prices']['APPLE'][-1]
-        else: ## NOT SURE IF NEEDED, MAYBE FOR EDGE CASES
-            self.nr_shares_g = self.delta_portfolio_value / 2 / self.hist_dict['historical_asset_prices']['GOOGLE'][-1] * -1 ## NOT SURE IF NEEDED, MAYBE FOR EDGE CASES
-            self.nr_shares_a = self.delta_portfolio_value / 2 / self.hist_dict['historical_asset_prices']['APPLE'][-1] ## NOT SURE IF NEEDED, MAYBE FOR EDGE CASES
-
-        self.shares_to_trade = [round(self.nr_shares_g, 0), round(self.nr_shares_a, 0)]
-
-        return self.shares_to_trade
-
-
-    def get_portfolio_value(self):
-
-        self.portfolio_value['GOOGLE'] = self.hist_dict['benchmark']['holdings']['GOOGLE'][-1] * \
-                                    self.hist_dict['historical_asset_prices']['GOOGLE'][-1]
-        self.portfolio_value['APPLE'] = self.hist_dict['benchmark']['holdings']['APPLE'][-1] * \
-                                   self.hist_dict['historical_asset_prices']['APPLE'][-1]
-
-        return self.portfolio_value
+        return portfolio_values, portfolio_weights
 

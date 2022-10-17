@@ -19,22 +19,24 @@ class TestBroker(unittest.TestCase):
 
         bench_config = {
             'name': 'benchmark_portfolio',
-            'type': "equally_weighted",
+            'initial_positions': "equally_weighted",
             'initial_balance': 10000,
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': "equally_weighted"
         }
 
         rl_config = {
             'name': 'rl_portfolio',
-            'type': None,
+            'initial_positions': "equally_weighted",
             'initial_balance': 10000,
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': "equally_weighted"
         }
 
         broker_config = {
@@ -49,8 +51,33 @@ class TestBroker(unittest.TestCase):
         }
         self.broker = Broker(self.feed, broker_config)
 
-    def test_reset(self):
-        self.broker.reset()
+    def test_reset(self,):
+        bench_config = {
+            'name': 'benchmark_portfolio',
+            'initial_positions': "equally_weighted",
+            'initial_balance': 10000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': 'equally_weigthed'
+        }
+
+        self.broker.reset(BenchmarkPortfolio(bench_config))
+
+        rl_config = {
+            'name': 'rl_portfolio',
+            'initial_positions': "equally_weighted",
+            'initial_balance': 10000,
+            'initial_weights': [0.5, 0.5],
+            'restrictions': dict(),
+            'start_date': '2020-02-24',
+            'schedule': self.rebalancing_schedule,
+            'rebalancing_type': 'equally_weigthed',
+        }
+
+        self.broker.reset(RLPortfolio(rl_config))
+
         pass
 
     def test_initial_weights(self):
