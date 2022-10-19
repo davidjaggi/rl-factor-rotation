@@ -111,11 +111,6 @@ class CSVDataFeed(Feed):
         )
         return prices
 
-    def get_returns_data(self, end_dt, start_dt=None, offset=None):
-        prices = self.get_price_data(end_dt, start_dt, offset)
-        returns = prices.pct_change()
-        return returns
-
     def get_data(self, end_dt, start_dt=None, fields=None, offset=None):
         """returns data for all assets for given fields
         NOTE: Currently, only one field is allowed so that data can be returned in one DataFrame
@@ -181,7 +176,6 @@ class GBMtwoAssetsFeed(object):
     def reset(self, start_dt, end_dt) -> dict:
         """resets the datafeed, i.e. pulls new data if necessary"""
 
-        # only download new data if start and end date are not the same as before or if data is empty
         # only download new data if start and end date are not the same as before or if data is empty
         if (self.start_date != start_dt or self.end_date != end_dt) or (
                 len(self.data) == 0
