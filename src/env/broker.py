@@ -1,3 +1,5 @@
+# import strftime
+import datetime
 from abc import ABC
 from src.env.portfolio import Portfolio
 
@@ -12,6 +14,10 @@ class Broker(ABC):
         self.benchmark_portfolio = self.config['benchmark_portfolio']
         self.rl_portfolio = self.config['rl_portfolio']
         self.transaction_cost = self.config['transaction_cost']
+        self.start_date = self.config['start_date']
+        self.start_date = datetime.datetime.strptime(self.start_date, '%Y-%m-%d')
+        self.end_date = self.config['end_date']
+        self.end_date = datetime.datetime.strptime(self.end_date, '%Y-%m-%d')
         self.hist_dict = self._create_hist_dict()
         self.trade_logs = self._create_trade_logs()
 

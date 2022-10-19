@@ -21,7 +21,7 @@ class Feed(object):
         self.end_date = end_date
         self.price_field_name = price_field_name
 
-    def reset_feed(self):
+    def reset(self):
         raise NotImplementedError
 
     def get_price_data(self, end_dt, start_dt=None):
@@ -44,10 +44,10 @@ class CSVDataFeed(Feed):
         )
         self.file_name = file_name
         self.data = []
-        self.reset_feed(self.start_date, self.end_date)
+        self.reset(self.start_date, self.end_date)
         self.num_assets = len(self.data.keys())
 
-    def reset_feed(self, start_dt, end_dt) -> dict:
+    def reset(self, start_dt, end_dt) -> dict:
         """resets the datafeed, i.e. pulls new data if necessary"""
 
         # only download new data if start and end date are not the same as before or if data is empty
@@ -161,7 +161,7 @@ class GBMtwoAssetsFeed(object):
 
         if self.checkGBMInput():
             self.data = []
-            self.reset_feed(self.start_date,self.end_date)
+            self.reset(self.start_date, self.end_date)
 
     def checkGBMInput(self) -> bool:
         necessaryKeys = ['StartingPrice','drift','vola','correlation']
@@ -178,7 +178,7 @@ class GBMtwoAssetsFeed(object):
                     raise TypeError
         return True
 
-    def reset_feed(self, start_dt, end_dt) -> dict:
+    def reset(self, start_dt, end_dt) -> dict:
         """resets the datafeed, i.e. pulls new data if necessary"""
 
         # only download new data if start and end date are not the same as before or if data is empty
@@ -314,10 +314,10 @@ class StooqDataFeed(Feed):
         )
         self.tickers = tickers
         self.data = []
-        self.reset_feed(self.start_date, self.end_date)
+        self.reset(self.start_date, self.end_date)
         self.num_assets = len(self.data.keys())
 
-    def reset_feed(self, start_dt, end_dt):
+    def reset(self, start_dt, end_dt):
         """resets the datafeed, i.e. pulls new data if necessary"""
 
         # only download new data if start and end date are not the same as before or if data is empty
