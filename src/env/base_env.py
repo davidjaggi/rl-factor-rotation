@@ -85,11 +85,9 @@ class BaseEnv(gym.Env, ABC):
         # self.date_memory = [self.rebalance_periods[0]]
         self.rewards_memory = []
         self.actions_memory = []
-        self.weights_memory = []
-        self.trades_memory = []
 
         # reset broker
-        self.broker.reset(self.benchmark_portfolio)
+        self.broker.reset()
         # initialize state
         # self.state = self.build_observation(self.rebalance_periods[self.day])
         # return self.state
@@ -111,52 +109,30 @@ class BaseEnv(gym.Env, ABC):
     def step(self, actions):
         assert self.terminal is False, "reset() must be called before step()"
 
-        self.current_prices = self.data_feed.get_price_data(
-            end_dt=self.rebalance_periods[self.day + 1],
-            start_dt=self.rebalance_periods[self.day],
-        )
-        self.current_returns = self.data_feed.get_returns_data(
-            end_dt=self.rebalance_periods[self.day + 1],
-            start_dt=self.rebalance_periods[self.day],
-        )
+        # self.current_prices = self.data_feed.get_price_data(
+        #     end_dt=self.rebalance_periods[self.day + 1],
+        #     start_dt=self.rebalance_periods[self.day],
+        # )
+        # self.current_returns = self.data_feed.get_returns_data(
+        #     end_dt=self.rebalance_periods[self.day + 1],
+        #     start_dt=self.rebalance_periods[self.day],
+        # )
         # transform actions to units
         actions = self._convert_action(actions)
         self.actions_memory.append(actions)
         trades = self.actions_to_trades(actions)
-        wgts, units, costs = self.weights_to_shares(
-            trades, self.current_weights, self.asset_memory[-1], self.current_holdings
-        )
-        self.current_weights = wgts
-        self.current_holdings = units
-        self.current_ptf_values = np.sum(
-            units * self.current_prices.iloc[1:, :].to_numpy(), axis=1
-        )
-        self.asset_memory.extend(self.current_ptf_values.tolist())
 
-        # do the same with a benchmark if there is one...
-        if self.config["benchmark_type"] is not None:
-            wgts_bmk = self._benchmark_weights()
-            wgts_bmk, units_bmk, costs_bmk = self.weights_to_shares(
-                None, wgts_bmk, self.bmk_memory[-1], self.current_holdings_bmk
-            )
-            self.current_holdings_bmk = units_bmk
-            self.current_ptf_values_bmk = np.sum(
-                units_bmk * self.current_prices.iloc[1:, :].to_numpy(), axis=1
-            )
-            self.bmk_memory.extend(self.current_ptf_values_bmk.tolist())
-
-        self.date_memory.extend([dt for dt in self.current_prices.index[1:]])
+        # execute trades
+        self.broker.rebalance(trades)
 
         self.reward = self.reward_func()
         self.reward = self.reward * self.reward_scaling  # scale reward
         self.rewards_memory.append(self.reward)
-        self.weights_memory.append(wgts)
-        self.trades_memory.append(trades)
 
         # state: s -> s+1
         self.day += 1
-        self.state = self.build_observation(self.rebalance_periods[self.day])
-        self.terminal = self.day >= len(self.rebalance_periods) - 1
+        # self.state = self.build_observation(self.rebalance_periods[self.day])
+        # self.terminal = self.day >= len(self.rebalance_periods) - 1
 
         return self.state, self.reward, self.terminal, {}
 

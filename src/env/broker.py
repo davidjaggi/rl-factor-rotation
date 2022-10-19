@@ -1,3 +1,5 @@
+# import strftime
+import datetime
 from abc import ABC
 
 
@@ -12,6 +14,10 @@ class Broker(ABC):
         self.benchmark_portfolio = self.config['benchmark_portfolio']
         self.rl_portfolio = self.config['rl_portfolio']
         self.transaction_cost = self.config['transaction_cost']
+        self.start_date = self.config['start_date']
+        self.start_date = datetime.datetime.strptime(self.start_date, '%Y-%m-%d')
+        self.end_date = self.config['end_date']
+        self.end_date = datetime.datetime.strptime(self.end_date, '%Y-%m-%d')
         self.hist_dict = self._create_hist_dict()
         self.trade_logs = self._create_trade_log()
 
@@ -25,27 +31,27 @@ class Broker(ABC):
         return {'benchmark_portfolio': [],
                 'rl_portfolio': []}
 
-    def reset(self, portfolio):
+    def reset(self):
         """ Resetting the Broker class """
-        self.data_feed.reset(time=portfolio.start_time)
-        dt, lob = self.data_feed.next_prices_snapshot()
+        self.data_feed.reset(start_dt=self.start_date, end_dt=self.end_date)
+        # dt, lob = self.data_feed.next_prices_snapshot()
 
         # reset the Broker logs
-        if type(portfolio).__name__ != 'rl_portfolio':
-            self.hist_dict['benchmark']['timestamp'] = []
-            self.hist_dict['benchmark']['holdings'] = []
-            self.trade_logs['benchmark_portfolio'] = []
-            self.current_dt_bmk = dt
-
-        else:
-            self.hist_dict['rl']['timestamp'] = []
-            self.hist_dict['rl']['lob'] = []
-            self.trade_logs['rl_portfolio'] = []
-            self.current_dt_rl = dt
-
-        # update to the first instance of the datafeed & record this
-        portfolio.reset()
-        self._record_prices(dt, lob, portfolio)
+        # if type(portfolio).__name__ != 'rl_portfolio':
+        #     self.hist_dict['benchmark']['timestamp'] = []
+        #     self.hist_dict['benchmark']['holdings'] = []
+        #     self.trade_logs['benchmark_portfolio'] = []
+        #     self.current_dt_bmk = dt
+        #
+        # else:
+        #     self.hist_dict['rl']['timestamp'] = []
+        #     self.hist_dict['rl']['lob'] = []
+        #     self.trade_logs['rl_portfolio'] = []
+        #     self.current_dt_rl = dt
+        #
+        # # update to the first instance of the datafeed & record this
+        # portfolio.reset()
+        # self._record_prices(dt, lob, portfolio)
 
     def _record_prices(self, portfolio, prices):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """

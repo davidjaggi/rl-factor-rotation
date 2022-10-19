@@ -63,7 +63,7 @@ class TestBaseEnv(unittest.TestCase):
         print(self.env.broker)
 
     def test_step(self):
-        # self.env.reset()
-        # action = self.env.action_space.sample()
-        # obs, rew, done, _ = self.env.step(action)
-        pass
+        self.env.reset()
+        action = self.env.action_space.sample()
+        obs, rew, done, _ = self.env.step(action)
+        assert self.env.day == 0
