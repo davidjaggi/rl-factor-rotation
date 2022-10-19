@@ -1,15 +1,5 @@
-# %%
-import random
-import unittest
-
-from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
-from src.env.base_env import BaseEnv
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
-from src.utils.load_path import load_data_path
-
-DATA_PATH = load_data_path()
-# %%
 
 config = {
     'benchmark_portfolio': {
@@ -47,23 +37,3 @@ config = {
 # Specify the portfolio configurations
 config['broker']['rl_portfolio'] = RLPortfolio(config['rl_portfolio'])
 config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_portfolio'])
-
-
-class TestBaseEnv(unittest.TestCase):
-    def setUp(self) -> None:
-        random.seed(1)
-        self.feed = CSVDataFeed(
-            DATA_PATH + "/example_data.csv"
-        )
-        self.env = BaseEnv(config=config, data_feed=self.feed, indicator_pipeline=None)
-
-    def test_reset(self):
-        self.env.reset()
-        assert self.env.day == 0
-        print(self.env.broker)
-
-    def test_step(self):
-        self.env.reset()
-        action = self.env.action_space.sample()
-        obs, rew, done, _ = self.env.step(action)
-        assert self.env.day == 0
