@@ -75,10 +75,16 @@ class Broker(ABC):
             self.hist_dict['rl']['cash'] = portfolio.cash_position
 
     def rebalance(self, date, prices):
-        # We first rebalance the benchmark portfolio
-        if self.benchmark_portfolio.rebalancing_schedule(date):
+        #TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
+        self.rebalance_portfolio(date, prices, self.benchmark_portfolio)
+        self.rebalance_portfolio(date, prices, self.rl_portfolio)
 
-            rebalance_dict = self.get_trades_for_rebalance(self.benchmark_portfolio, prices)
+    def rebalance_portfolio(self, date, prices, portfolio: Portfolio):
+
+
+        if portfolio.rebalancing_schedule(date):
+
+            rebalance_dict = self.get_trades_for_rebalance(portfolio, prices)
 
             # Now we need to see whether we can carry out the proposed transactions given our cash balance (remember the transaction shares are rounded)
 
@@ -91,31 +97,29 @@ class Broker(ABC):
                 else:
                     outgoing_cash += transaction['transaction_shares']*prices[asset]
 
-            if incoming_cash + self.benchmark_portfolio.cash_position > outgoing_cash:
-                # We have enough capital to carry out the rebalance, we carry out the trades and update our cash and positions
-                for asset, transaction in enumerate(rebalance_dict):
-                    self.benchmark_portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
-
-                self.benchmark_portfolio.cash_position += incoming_cash - outgoing_cash
-            else:
+            while incoming_cash + portfolio.cash_position < outgoing_cash:
                 # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
                 for asset, transaction in enumerate(rebalance_dict):
-                    if transaction['transaction_shares'] > 0:
+                    if incoming_cash + portfolio.cash_position < outgoing_cash and transaction['transaction_shares'] > 0:
                         # We need to scale down this purchase
-                        rebalance_dict[asset]['transaction_shares'] += -(outgoing_cash - (incoming_cash + self.benchmark_portfolio.cash_position))/prices[asset]
+                        rebalance_dict[asset]['transaction_shares'] += -int((outgoing_cash - (incoming_cash + portfolio.cash_position))/prices[asset])
                         # Update the outgoing cash
-                        outgoing_cash = rebalance_dict[asset]['transaction_shares']*prices[asset]
-                #TODO: Currently this only works when ONLY 1 ASSET is sold, to generalize this we would have to implement a "scale down method".
+                        outgoing_cash += -int((outgoing_cash - (incoming_cash + portfolio.cash_position))/prices[asset])*prices[asset]
+                        #TODO: Currently this only scales down the first "buy" transaction it finds in the dictionary, if we are buying more than one asset we would have to implement a "scale down method" (for example buy 1 share less iteratively from all buys until we have enough capital)
+            # We now have enough capital to carry out the rebalance so we carry out the trades and update our cash and positions
+            for asset, transaction in enumerate(rebalance_dict):
+                portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
+            # We record the change in cash
+            portfolio.cash_position += incoming_cash - outgoing_cash
 
+            #TODO: If the cash position left is bigger than the price of some of the buys, we scale up the buys of the portfolio
+            prices_buys = [price for asset, price in enumerate(prices) if rebalance_dict[asset]['transaction_shares'] > 0]
+            while portfolio.cash_position > min(prices_buys):
                 for asset, transaction in enumerate(rebalance_dict):
-                    self.benchmark_portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
-
-                self.benchmark_portfolio.cash_position += incoming_cash - outgoing_cash
-
-            #TODO: We need to decide what to do if the cash position left here is big, maybe increase the buying transactions? Otherwise it may start building up during the simulation
-
-        if self.benchmark_portfolio.rebalancing_schedule(date):
-            #TODO: Start here
+                    if portfolio.cash_position > prices[asset] and rebalance_dict[asset]['transaction_shares'] > 0:
+                        # We buy one more share of said asset
+                        portfolio.positions[asset] += 1
+                        portfolio.cash_position += - prices[asset]
 
 
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
