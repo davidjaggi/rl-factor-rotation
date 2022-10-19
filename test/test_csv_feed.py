@@ -33,3 +33,11 @@ class TestCSVDataFeed(unittest.TestCase):
         ]
         assert len(self.feed.data["AAPL.O"].columns) == len(names)
         assert all([a == b for a, b in zip(self.feed.data["AAPL.O"].columns, names)])
+
+    def test_reset(self):
+        self.feed.reset(start_dt="2018-01-01", end_dt="2018-01-02")
+        pass
+
+    def test_get_price_data(self):
+        prices = self.feed.get_price_data("2018-01-02")
+        assert prices.__class__.__name__ == "DataFrame"
