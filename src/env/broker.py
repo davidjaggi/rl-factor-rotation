@@ -1,7 +1,9 @@
 # import strftime
 import datetime
 from abc import ABC
+
 from src.env.portfolio import Portfolio
+
 
 class Broker(ABC):
     """ Broker class
@@ -31,11 +33,11 @@ class Broker(ABC):
         return {'benchmark_portfolio': [],
                 'rl_portfolio': []}
 
-
-    def reset(self, portfolio : Portfolio):
+    def reset(self, portfolio: Portfolio):
         """ Resetting the Broker class """
-        self.data_feed.reset(time=portfolio.start_date)
-        dt, prices = self.data_feed.next_prices_snapshot()
+        self.data_feed.reset(start_dt=portfolio.start_date)
+        # TODO: define how the get_price_data method works
+        dt, prices = self.data_feed.get_price_data()
 
         # reset the Broker logs
         if type(portfolio).__name__ != 'rl_portfolio':
@@ -121,8 +123,8 @@ class Broker(ABC):
             #TODO: We need to decide what to do if the cash position left here is big, maybe increase the buying transactions? Otherwise it may start building up during the simulation
 
         if self.benchmark_portfolio.rebalancing_schedule(date):
-            #TODO: Start here
-
+            # TODO: Start here
+            pass
 
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
