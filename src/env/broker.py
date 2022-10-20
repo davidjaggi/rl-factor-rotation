@@ -1,5 +1,7 @@
 from abc import ABC
+
 from src.env.portfolio import Portfolio
+
 
 class Broker(ABC):
     """ Broker class
@@ -28,20 +30,20 @@ class Broker(ABC):
 
     def reset(self, portfolio : Portfolio):
         """ Resetting the Broker class """
-        self.data_feed.reset(time=portfolio.start_date)
-        dt, prices = self.data_feed.next_prices_snapshot()
+        self.data_feed.reset(start_dt=portfolio.start_date, end_dt=None)
+        dt, prices = self.data_feed.get_price_data(start_dt=portfolio.start_date, end_dt=None)
 
         # reset the Broker logs
-        if type(portfolio).__name__ != 'rl_portfolio':
-            self.hist_dict['benchmark']['timestamp'] = []
-            self.hist_dict['benchmark']['holdings'] = []
+        if type(portfolio).__name__ != 'RLPortfolio':
+            self.hist_dict['benchmark_portfolio']['timestamp'] = []
+            self.hist_dict['benchmark_portfolio']['holdings'] = []
             self.trade_logs['benchmark_portfolio'] = []
             self.portfolio_value = {'GOOGLE': 1, 'APPLE': 1}
             self.current_dt_bmk = dt
 
         else:
-            self.hist_dict['rl']['timestamp'] = []
-            self.hist_dict['rl']['lob'] = []
+            self.hist_dict['rl_portfolio']['timestamp'] = []
+            self.hist_dict['rl_portfolio']['lob'] = []
             self.trade_logs['rl_portfolio'] = []
             self.current_dt_rl = dt
 

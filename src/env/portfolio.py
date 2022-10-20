@@ -60,9 +60,10 @@ class Portfolio(ABC):
         """
         positions = {}
 
-        if self.type == "equally_weighted":
-            number_of_assets = len(prices)
-            for asset, price in enumerate(prices):
+        if self.rebalancing_type == "equally_weighted":
+            number_of_assets = prices.shape[1]
+            for id, asset in enumerate(prices):
+                price = prices[asset].iloc[0]
                 positions[asset] = round((self.cash_position / number_of_assets) / price, 0)
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
@@ -83,5 +84,5 @@ class RLPortfolio(Portfolio):
     def __init__(self, *args, **kwargs):
         super(RLPortfolio, self).__init__(*args, **kwargs)
 
-        if self.type == "equally_weighted":
+        if self.rebalancing_type == "equally_weighted":
             self.ideal_weights = [0.5, 0.5]  # TODO move to 1/n
