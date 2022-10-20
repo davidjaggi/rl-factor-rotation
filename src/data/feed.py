@@ -140,7 +140,7 @@ class CSVDataFeed(Feed):
 
         return data_out
 
-    def next_prices_snapshot(self):
+    def get_prices_snapshot(self):
         prices = {}
         for idx, (asset, price) in enumerate(self.data.items()):
             prices[asset] = self.data[asset].loc[self.dt]

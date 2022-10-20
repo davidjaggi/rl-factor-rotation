@@ -31,7 +31,7 @@ class Broker(ABC):
     def reset(self, portfolio : Portfolio):
         """ Resetting the Broker class """
         self.data_feed.reset(start_dt=portfolio.start_date, end_dt=None)
-        dt, prices = self.data_feed.get_price_data(start_dt=portfolio.start_date, end_dt=None)
+        dt, prices = self.data_feed.get_prices_snapshot(start_dt=portfolio.start_date, end_dt=None)
 
         # reset the Broker logs
         if type(portfolio).__name__ != 'RLPortfolio':
