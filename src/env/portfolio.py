@@ -56,6 +56,7 @@ class Portfolio(ABC):
         positions = {}
 
         if self.rebalancing_type == "equally_weighted":
+
             number_of_assets = len(prices)
             for i, (asset, price) in enumerate(prices.items()):
                 positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])

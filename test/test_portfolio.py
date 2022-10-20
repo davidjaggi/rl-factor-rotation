@@ -44,7 +44,8 @@ class TestPortfolio(unittest.TestCase):
         self.portfolio = Portfolio(test_dict)
 
     def test_reset(self):
-        self.portfolio.reset()
+        prices = self.feed.get_price_data(self.portfolio.start_date)
+        self.portfolio.reset(start_date=self.portfolio.start_date, prices=prices)
         assert self.portfolio.trade_idx == 0
 
 
@@ -63,13 +64,15 @@ class TestBenchmarkPortfolio(unittest.TestCase):
             'restrictions': dict(),
             'start_date': '2020-02-24',
             'schedule': self.rebalancing_schedule,
-            'rebalancing_type': 'equally_weigthed'
+            'rebalancing_type': 'equally_weighted'
         }
         self.portfolio = Portfolio(bench_dict)
 
     def test_reset(self):
-        self.portfolio.reset()
+        prices = self.feed.get_price_data(self.portfolio.start_date)
+        self.portfolio.reset(start_date=self.portfolio.start_date, prices=prices)
         assert self.portfolio.trade_idx == 0
+
 
 
 class TestRLPortfolio(unittest.TestCase):
@@ -87,10 +90,11 @@ class TestRLPortfolio(unittest.TestCase):
             'restrictions': dict(),
             'start_date': '2020-02-24',
             'schedule': self.rebalancing_schedule,
-            'rebalancing_type': 'equally_weigthed'
+            'rebalancing_type': 'equally_weighted'
         }
         self.portfolio = Portfolio(rl_dict)
 
     def test_reset(self):
-        self.portfolio.reset()
+        prices = self.feed.get_price_data(self.portfolio.start_date)
+        self.portfolio.reset(start_date=self.portfolio.start_date, prices=prices)
         assert self.portfolio.trade_idx == 0
