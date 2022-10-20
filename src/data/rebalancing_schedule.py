@@ -1,5 +1,5 @@
 import pandas as pd
-from pandas.tseries.offsets import BDay
+from pandas.tseries.offsets import BDay, BMonthEnd
 
 
 class RebalancingSchedule(object):
@@ -35,6 +35,10 @@ class RebalancingSchedule(object):
         self.rebalancing_dates.sort()
         return self.rebalancing_dates
 
+    def check_rebalance_date(self, date):
+
+        return date in self.rebalancing_dates
+
     def schedule(self):
         raise NotImplementedError
 
@@ -67,6 +71,7 @@ class PeriodicSchedule(RebalancingSchedule):
         self.skip_month = skip_month
         self.skip_year = skip_year
         super().__init__(*args, **kwargs)
+        self.rebalancing_dates = self.schedule()
 
     def schedule(self) -> list:
         if self.start_date is None or self.end_date is None:
@@ -87,5 +92,12 @@ class PeriodicSchedule(RebalancingSchedule):
         if self.skip_year is not None:
             pd_dates = [x for x in pd_dates if x.year not in self.skip_year]
 
-        self.rebalancing_dates = pd_dates
         return pd_dates
+
+
+#TODO: Function to get :
+
+def last_Bday_of_month(dt):
+    """"Get the last business day of a given month.
+    """
+    return BMonthEnd.rollforward(dt)
