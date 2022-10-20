@@ -13,9 +13,8 @@ class TestBroker(unittest.TestCase):
     def setUp(self) -> None:
         random.seed(1)
         self.feed = CSVDataFeed(
-            DATA_PATH + "/example_data.csv"
+            file_name= DATA_PATH + "/example_data.csv", start_date= '2020-02-24'
         )
-        self.rebalancing_schedule = PeriodicSchedule(frequency="WOM-3FRI")
 
         bench_config = {
             'name': 'benchmark_portfolio',
@@ -24,9 +23,10 @@ class TestBroker(unittest.TestCase):
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule,
+            'end_date': '2020-12-31',
             'rebalancing_type': "equally_weighted"
         }
+        bench_config['rebalancing_schedule'] = PeriodicSchedule(frequency="WOM-3FRI", start_date=bench_config['start_date'], end_date= bench_config['end_date'])
 
         rl_config = {
             'name': 'rl_portfolio',
@@ -35,15 +35,14 @@ class TestBroker(unittest.TestCase):
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule,
+            'end_date': '2020-12-31',
             'rebalancing_type': "equally_weighted"
         }
+        rl_config['rebalancing_schedule'] = PeriodicSchedule(frequency="WOM-3FRI", start_date=bench_config['start_date'], end_date= bench_config['end_date'])
 
         broker_config = {
             "rl_portfolio": RLPortfolio(rl_config),
             "benchmark_portfolio": BenchmarkPortfolio(bench_config),
-            "start_date": "2018-12-31",
-            "end_date": "2020-12-31",
             "busday_offset_start": 250,
             "transaction_cost": 0.0005,
             "reward_scaling": 1,
@@ -59,11 +58,12 @@ class TestBroker(unittest.TestCase):
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule,
-            'rebalancing_type': 'equally_weigthed'
+            'end_date': '2020-12-31',
+            'rebalancing_type': 'equally_weighted'
         }
-
-        self.broker.reset(BenchmarkPortfolio(bench_config))
+        bench_config['rebalancing_schedule'] = PeriodicSchedule(frequency="WOM-3FRI", start_date=bench_config['start_date'], end_date= bench_config['end_date'])
+        benchmark_portfolio = BenchmarkPortfolio(bench_config)
+        self.broker.reset(benchmark_portfolio) # This works as inteded now, but when implementing the reset in the Env, the portfolio should be a self.broker.(Bm/rl)_portfolio
 
         rl_config = {
             'name': 'rl_portfolio',
@@ -72,13 +72,20 @@ class TestBroker(unittest.TestCase):
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'start_date': '2020-02-24',
-            'schedule': self.rebalancing_schedule,
-            'rebalancing_type': 'equally_weigthed',
+            'end_date': '2020-12-31',
+            'rebalancing_type': 'equally_weighted',
         }
-
-        self.broker.reset(RLPortfolio(rl_config))
+        rl_config['rebalancing_schedule'] = PeriodicSchedule(frequency="WOM-3FRI", start_date=bench_config['start_date'], end_date= bench_config['end_date'])
+        rl_portfolio = RLPortfolio(rl_config)
+        self.broker.reset(rl_portfolio)
 
         pass
 
     def test_initial_weights(self):
         pass
+
+    def test_rebalance(self):
+        pass
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,12 +1,7 @@
 from abc import ABC
-
-from pandas.tseries.offsets import BMonthEnd
-
-offset = BMonthEnd()
+import pandas as pd
 
 
-def last_Bday_of_month(dt):
-    return offset.rollforward(dt)
 
 
 class Portfolio(ABC):
@@ -16,7 +11,7 @@ class Portfolio(ABC):
         investment_universe (list): List of string names of all the assets the portfolio can hold positions in.
         restrictions (list): list of boolean methods to apply to self.ideal_weights when rebalancing.
         start_date (Datetime): Starting date of the portfolio.
-        schedule (func): Boolean function that specifices whether or not a portfolio should be rebalanced at a given date.
+        schedule (func): Boolean function that specifies whether or not a portfolio should be rebalanced at a given date.
         initial_positions (str): Type of initial portfolio configuration (equally weighted, no initial positions etc.)
         rebalancing_type (str): Type of rebalancing to be carried out on the portfolio (equally weighted,
         performance based, volatility based etc.)
@@ -27,9 +22,9 @@ class Portfolio(ABC):
         self.initial_balance = config["initial_balance"]
         self.cash_position = config["initial_balance"]
         self.restrictions = config["restrictions"]
-        self.start_date = config["start_date"]
-        self.dt = config["start_date"]
-        self.schedule = config["schedule"]
+        self.start_date = pd.to_datetime(config["start_date"], format="%Y-%m-%d")
+        self.dt = self.start_date
+        self.rebalancing_schedule = config["rebalancing_schedule"]
         self.initial_positions = config["initial_positions"]
         self.rebalancing_type = config["rebalancing_type"]
         self.trade_idx = 0  # Trade Counter for testing
@@ -50,8 +45,8 @@ class Portfolio(ABC):
         Returns:
             bool: True if the portfolio needs to be rebalanced, False otherwise.
         """
-        if self.schedule == "monthly":
-            return last_Bday_of_month(date) == date
+        if date in self.rebalancing_schedule.rebalancing_dates:
+            return True
         else:
             raise NotImplementedError
 
@@ -61,13 +56,13 @@ class Portfolio(ABC):
         positions = {}
 
         if self.rebalancing_type == "equally_weighted":
-            number_of_assets = prices.shape[1]
-            for id, asset in enumerate(prices):
-                price = prices[asset].iloc[0]
-                positions[asset] = round((self.cash_position / number_of_assets) / price, 0)
+
+            number_of_assets = len(prices)
+            for i, (asset, price) in enumerate(prices.items()):
+                positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
-                    self.cash_position = self.cash_position - positions[asset] * price
+                    self.cash_position = self.cash_position - positions[asset] * price['Price Open']
 
         return positions
 
@@ -84,5 +79,5 @@ class RLPortfolio(Portfolio):
     def __init__(self, *args, **kwargs):
         super(RLPortfolio, self).__init__(*args, **kwargs)
 
-        if self.rebalancing_type == "equally_weighted":
+        if self.initial_positions == "equally_weighted":
             self.ideal_weights = [0.5, 0.5]  # TODO move to 1/n

@@ -21,7 +21,7 @@ class Feed(object):
         self.end_date = end_date
         self.price_field_name = price_field_name
 
-    def reset(self):
+    def reset(self, start_dt, end_dt):
         raise NotImplementedError
 
     def get_price_data(self, end_dt, start_dt=None):
@@ -43,17 +43,15 @@ class CSVDataFeed(Feed):
             price_field_name=price_field_name, *args, **kwargs
         )
         self.file_name = file_name
-        self.data = []
         self.reset(self.start_date, self.end_date)
         self.num_assets = len(self.data.keys())
 
-    def reset(self, start_dt, end_dt) -> dict:
+    def reset(self, start_dt, *args, **kwargs):
         """resets the datafeed, i.e. pulls new data if necessary"""
 
         # only download new data if start and end date are not the same as before or if data is empty
-        if (self.start_date != start_dt or self.end_date != end_dt) or (
-                len(self.data) == 0
-        ):
+        if (self.start_date != start_dt or self.end_date != kwargs.get('end_date', None)) or not hasattr(self, 'data'):
+
             data = pd.read_csv(self.file_name, index_col=0)
             data["Date"] = pd.to_datetime(
                 data["Date"], format="%Y-%m-%d"
@@ -72,6 +70,7 @@ class CSVDataFeed(Feed):
                 raise ValueError("No data available at specified end date")
 
             self.data = self._convert_to_dict(data)
+        self.dt = pd.to_datetime(start_dt, format="%Y-%m-%d")
 
     def get_data_idx(self):
         """gets all possible dates/indexes from the data"""
@@ -95,7 +94,7 @@ class CSVDataFeed(Feed):
     def get_available_fields(self):
         """returns a list of all possible fields from the data"""
 
-        return next(iter(self.data.values())).colums
+        return next(iter(self.data.values())).columns
 
     def get_price_data(self, end_dt, start_dt=None, offset=None):
         """returns price data in one dataframe, each column contains an asset"""
@@ -140,6 +139,20 @@ class CSVDataFeed(Feed):
             data_out = pd.concat([data_out, data_temp], axis=1)
 
         return data_out
+
+    def next_prices_snapshot(self):
+        prices = {}
+        for idx, (asset, price) in enumerate(self.data.items()):
+            prices[asset] = self.data[asset].loc[self.dt]
+
+        # We save the current dt
+        dt = self.dt
+        # And update the dt to the next prices snapshot
+        dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(self.dt)
+        self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
+
+        return dt, prices
+
 
 class GBMtwoAssetsFeed(object):
 
