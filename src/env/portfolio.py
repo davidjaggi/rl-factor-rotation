@@ -62,7 +62,7 @@ class Portfolio(ABC):
                 positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
-                    self.cash_position = self.cash_position - positions[asset] * price['Price Open']
+                    self.cash_position += -positions[asset] * price['Price Open']
 
         return positions
 

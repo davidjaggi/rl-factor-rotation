@@ -34,8 +34,7 @@ The experiment class contains the code for the experiment.
 
 Tasks and open todos can be seen in the [Projects section](https://github.zhaw.ch/davidjaggi/rl-factor-rotation/projects/1).
 
-- [ ] Write function to get value of the portfolio
-- [ ] Adjust existing code to get correct shares to trade
-- [ ] Adjust code to guarantee to get correct values depending on assets.
-- [ ] Reset data feed function
-- [ ] Implement initial rebalance
+- [ ] Implement Environment reset() function that randomizes starting dates of the portfolios and resets the broker (and thus the datafeed) accordingly. 
+- [ ] Implement Environment step() function that translates actions (discrete for now) into ideal_weights changes and calls the rebalancing schedule /rebalance functions, and finally calculates rewards. 
+- [ ] Implement Environment tests for random actions + visualization functionalities to graph portfolios (benchmark vs RL) across Episodes.
+
