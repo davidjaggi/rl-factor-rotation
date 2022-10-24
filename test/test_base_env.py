@@ -14,21 +14,21 @@ DATA_PATH = load_data_path()
 config = {
     'benchmark_portfolio': {
         'name': 'benchmark_portfolio',
-        'type': "equally_weighted",
+        'rebalancing_type': "equally_weighted",
         'initial_balance': 10000,
         'initial_weights': [0.5, 0.5],
         'restrictions': dict(),
         'start_date': '2020-02-24',
-        'schedule': PeriodicSchedule(frequency="WOM-3FRI")
+        'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'rl_portfolio': {
         'name': 'rl_portfolio',
-        'type': None,
+        'rebalancing_type': None,
         'initial_balance': 10000,
         'initial_weights': [0.5, 0.5],
         'restrictions': dict(),
         'start_date': '2020-02-24',
-        'schedule': PeriodicSchedule(frequency="WOM-3FRI")
+        'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'broker': {
         "rl_portfolio": None,
@@ -66,4 +66,6 @@ class TestBaseEnv(unittest.TestCase):
         self.env.reset()
         action = self.env.action_space.sample()
         obs, rew, done, _ = self.env.step(action)
-        assert self.env.day == 0
+        assert done == False
+        assert action == 0
+        assert rew == 100

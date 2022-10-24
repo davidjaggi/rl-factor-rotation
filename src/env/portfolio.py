@@ -1,7 +1,6 @@
 from abc import ABC
+
 import pandas as pd
-
-
 
 
 class Portfolio(ABC):
@@ -25,7 +24,6 @@ class Portfolio(ABC):
         self.start_date = pd.to_datetime(config["start_date"], format="%Y-%m-%d")
         self.dt = self.start_date
         self.rebalancing_schedule = config["rebalancing_schedule"]
-        self.initial_positions = config["initial_positions"]
         self.rebalancing_type = config["rebalancing_type"]
         self.trade_idx = 0  # Trade Counter for testing
 
@@ -79,5 +77,5 @@ class RLPortfolio(Portfolio):
     def __init__(self, *args, **kwargs):
         super(RLPortfolio, self).__init__(*args, **kwargs)
 
-        if self.initial_positions == "equally_weighted":
+        if self.rebalancing_type == "equally_weighted":
             self.ideal_weights = [0.5, 0.5]  # TODO move to 1/n

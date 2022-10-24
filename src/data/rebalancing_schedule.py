@@ -71,7 +71,7 @@ class PeriodicSchedule(RebalancingSchedule):
         self.skip_month = skip_month
         self.skip_year = skip_year
         super().__init__(*args, **kwargs)
-        self.rebalancing_dates = self.schedule()
+        # self.rebalancing_dates = self.schedule()
 
     def schedule(self) -> list:
         if self.start_date is None or self.end_date is None:

@@ -71,6 +71,7 @@ class BaseEnv(gym.Env, ABC):
 
         # initialize reward
         self.day = 0
+        self.date = self.data_feed.start_date
         self.reward = 0
         self.cost = 0
         self.trades = 0
@@ -86,44 +87,37 @@ class BaseEnv(gym.Env, ABC):
         self.rewards_memory = []
         self.actions_memory = []
 
-        # reset broker
-        self.broker.reset()
+        # reset the portfolios
+        self.broker.reset(self.rl_portfolio)
+        self.broker.reset(self.benchmark_portfolio)
         # initialize state
-        # self.state = self.build_observation(self.rebalance_periods[self.day])
+        self.state = self.build_observation(self.day)
         # return self.state
 
-    def build_observation(self, date):
+    def build_observation(self, day):
         """ Builds the observation space """
-        obs = np.empty((0, self.data_feed.num_assets), np.float)
+        obs = np.empty((0, self.data_feed.num_assets), float)
         if self.indicator_pipeline is not None:
             # this will have to be built first
             for indicator in self.indicator_pipeline.indicators:
                 inds = indicator.calc()
                 obs = np.append(obs, inds, axis=0)
-        prices = self.data_feed.get_price_data(date, offset=self.obs_price_hist)
-        obs = np.append(obs, prices.to_numpy(dtype=np.float), axis=0).flatten(order="F")
-        obs = np.append(obs, self.current_holdings)  # attach current holdings
-        obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value
+        # prices = self.data_feed.get_price_data(day, offset=self.obs_price_hist)
+        obs = np.append(obs, self.data_feed.get_prices_snapshot_array(), axis=0).flatten(order="F")
+        # obs = np.append(obs, self.current_holdings)  # attach current holdings # TODO add current holdings
+        # obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value # TODO add last portfolio value
         return obs
 
     def step(self, actions):
         assert self.terminal is False, "reset() must be called before step()"
-
-        # self.current_prices = self.data_feed.get_price_data(
-        #     end_dt=self.rebalance_periods[self.day + 1],
-        #     start_dt=self.rebalance_periods[self.day],
-        # )
-        # self.current_returns = self.data_feed.get_returns_data(
-        #     end_dt=self.rebalance_periods[self.day + 1],
-        #     start_dt=self.rebalance_periods[self.day],
-        # )
         # transform actions to units
         actions = self._convert_action(actions)
         self.actions_memory.append(actions)
         trades = self.actions_to_trades(actions)
 
         # execute trades
-        self.broker.rebalance(trades)
+        dt, prices = self.data_feed.get_prices_snapshot()
+        self.broker.rebalance(dt, prices)
 
         self.reward = self.reward_func()
         self.reward = self.reward * self.reward_scaling  # scale reward
@@ -131,8 +125,8 @@ class BaseEnv(gym.Env, ABC):
 
         # state: s -> s+1
         self.day += 1
-        # self.state = self.build_observation(self.rebalance_periods[self.day])
-        # self.terminal = self.day >= len(self.rebalance_periods) - 1
+        # self.state = self.build_observation(self.rebalance_periods[self.day]) # TODO: implement state
+        # self.terminal = self.day >= len(self.rebalance_periods) - 1 # TODO: implement terminal
 
         return self.state, self.reward, self.terminal, {}
 
@@ -263,7 +257,6 @@ class BaseEnv(gym.Env, ABC):
 
     def reward_func(self):
         """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""
-        # TODO: reward is the difference of the current values vs. the benchmark
-        reward = self.current_ptf_values[-1] - self.current_ptf_values_bmk[-1]
+        # TODO: implement correct reward function
+        reward = 100
         return reward
-

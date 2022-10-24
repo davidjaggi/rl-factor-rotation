@@ -153,6 +153,16 @@ class CSVDataFeed(Feed):
 
         return dt, prices
 
+    def get_prices_snapshot_array(self):
+        prices = []
+        dt, price_dict = self.get_prices_snapshot()
+        for idx, (asset, price) in enumerate(price_dict.items()):
+            prices.append(price["Price Open"])
+
+        prices = np.array(prices, dtype=float)[None, :]
+        # convert prices to a 1d array
+        return prices
+
 
 class GBMtwoAssetsFeed(object):
 
