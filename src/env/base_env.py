@@ -109,7 +109,7 @@ class BaseEnv(gym.Env, ABC):
         return obs
 
     def step(self, actions):
-        assert self.terminal is False, "reset() must be called before step()"
+        assert self.done is False, "reset() must be called before step()"
         # transform actions to units
         actions = self._convert_action(actions)
         self.actions_memory.append(actions)
