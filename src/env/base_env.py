@@ -113,8 +113,8 @@ class BaseEnv(gym.Env, ABC):
         # transform actions to units
         actions = self._convert_action(actions)
         self.actions_memory.append(actions)
-        trades = self.actions_to_trades(actions)
-
+        trades = self.actions_to_trades(actions)  # TODO: rename actions_to_ideal_weights_delta
+        # TODO: function in the broker which takes delta weights and modifies the ideal weight of the RL portfolio
         # execute trades
         dt, prices = self.data_feed.get_prices_snapshot()
         self.broker.rebalance(dt, prices)
@@ -126,7 +126,7 @@ class BaseEnv(gym.Env, ABC):
         # state: s -> s+1
         self.day += 1
         # self.state = self.build_observation(self.rebalance_periods[self.day]) # TODO: implement state
-        # self.done = self.day >= len(self.rebalance_periods) - 1 # TODO: implement terminal
+        # self.done = self.day >= len(self.rebalance_periods) - 1 # TODO: implement done
 
         return self.state, self.reward, self.done, {}
 

@@ -76,8 +76,8 @@ class Broker(ABC):
             self.hist_dict['rl']['holdings'].append(portfolio.holdings)
             self.hist_dict['rl']['cash'] = portfolio.cash_position
 
-    def rebalance(self, date, prices):
-        #TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
+    def rebalance(self, date, prices):  # TODO: rename function to rebalance_and_log
+        # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
         self.rebalance_portfolio(date, prices, self.benchmark_portfolio)
         self.rebalance_portfolio(date, prices, self.rl_portfolio)
 
