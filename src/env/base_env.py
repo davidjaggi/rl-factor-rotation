@@ -67,7 +67,7 @@ class BaseEnv(gym.Env, ABC):
     def reset(self):
         """Resets the environment to its initial state"""
 
-        self.terminal = False
+        self.done = False
 
         # initialize reward
         self.day = 0
@@ -126,9 +126,9 @@ class BaseEnv(gym.Env, ABC):
         # state: s -> s+1
         self.day += 1
         # self.state = self.build_observation(self.rebalance_periods[self.day]) # TODO: implement state
-        # self.terminal = self.day >= len(self.rebalance_periods) - 1 # TODO: implement terminal
+        # self.done = self.day >= len(self.rebalance_periods) - 1 # TODO: implement terminal
 
-        return self.state, self.reward, self.terminal, {}
+        return self.state, self.reward, self.done, {}
 
     def _convert_action(self, action):
         """Used if actions need to be transformed without having to change entire step() method"""

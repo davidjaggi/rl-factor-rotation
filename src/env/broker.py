@@ -133,6 +133,7 @@ class Broker(ABC):
                         portfolio.positions[asset] += 1
                         portfolio.cash_position += -prices[asset]
 
+        # TODO: record the trades and prices in the hist_dict
 
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
