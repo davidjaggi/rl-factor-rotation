@@ -1,7 +1,5 @@
 from abc import ABC
 
-import pandas as pd
-
 
 class Portfolio(ABC):
     """ Parent class for all portfolios.
@@ -21,8 +19,6 @@ class Portfolio(ABC):
         self.initial_balance = config["initial_balance"]
         self.cash_position = config["initial_balance"]
         self.restrictions = config["restrictions"]
-        self.start_date = pd.to_datetime(config["start_date"], format="%Y-%m-%d")
-        self.dt = self.start_date
         self.rebalancing_schedule = config["rebalancing_schedule"]
         self.rebalancing_type = config["rebalancing_type"]
         self.trade_idx = 0  # Trade Counter for testing
@@ -52,16 +48,22 @@ class Portfolio(ABC):
         """Calculate the initial positions of the portfolio (without transaction costs for now)
         """
         positions = {}
-
+        number_of_assets = len(prices)
         if self.rebalancing_type == "equally_weighted":
-
-            number_of_assets = len(prices)
+            # TODO: fix the equally weighted case
             for i, (asset, price) in enumerate(prices.items()):
                 positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
                     self.cash_position += -positions[asset] * price['Price Open']
 
+
+        else:
+            for i, (asset, price) in enumerate(prices.items()):
+                positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])
+                # Check if we have enough initial balance to initiate the position
+                if positions[asset] > 0:
+                    self.cash_position += -positions[asset] * price['Price Open']
         return positions
 
 

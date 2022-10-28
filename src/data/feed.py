@@ -45,6 +45,7 @@ class CSVDataFeed(Feed):
         self.file_name = file_name
         self.reset(self.start_date, self.end_date)
         self.num_assets = len(self.data.keys())
+        self.dates = self.get_dates()
 
     def reset(self, start_dt, *args, **kwargs):
         """resets the datafeed, i.e. pulls new data if necessary"""
@@ -140,28 +141,41 @@ class CSVDataFeed(Feed):
 
         return data_out
 
-    def get_prices_snapshot(self):
-        prices = {}
+    def get_prices_snapshot(self, idx, offset=None):
+        date = self.dates[idx]
+        if offset is None:
+            prices = {}
+            for idx, (asset, price) in enumerate(self.data.items()):
+                prices[asset] = self.data[asset].loc[self.dt]
+
+            # And update the dt to the next prices snapshot
+            dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(date)
+            self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
+
+            return date, prices
+        else:
+            pass
+
+    def get_dates(self):
+        dates = []
         for idx, (asset, price) in enumerate(self.data.items()):
-            prices[asset] = self.data[asset].loc[self.dt]
+            dates.append(self.data[asset].index)
+        # return ordered dates
+        return sorted(set(dates[0]).intersection(*dates))
 
-        # We save the current dt
-        dt = self.dt
-        # And update the dt to the next prices snapshot
-        dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(self.dt)
-        self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
-
-        return dt, prices
-
-    def get_prices_snapshot_array(self):
+    def get_prices_snapshot_array(self, idx):
         prices = []
-        dt, price_dict = self.get_prices_snapshot()
+        dt, price_dict = self.get_prices_snapshot(idx)
         for idx, (asset, price) in enumerate(price_dict.items()):
             prices.append(price["Price Open"])
 
         prices = np.array(prices, dtype=float)[None, :]
         # convert prices to a 1d array
         return prices
+
+    def get_idx(self, date):
+        dt = pd.to_datetime(date)
+        return self.dates.index(dt)
 
 
 class GBMtwoAssetsFeed(object):

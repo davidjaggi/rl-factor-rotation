@@ -34,34 +34,6 @@ class BaseEnv(gym.Env, ABC):
         self.reward_scaling = self.config['agent']["reward_scaling"]
         self.obs_price_hist = self.config['agent']["obs_price_hist"]
 
-        # set start and end date as well as rebalancing periods...
-        # if isinstance(self.rebalance_schedule, list):
-        #     self.start_date = self.rebalance_schedule[0].strftime("%Y-%m-%d")
-        #     self.end_date = self.rebalance_schedule[-1].strftime("%Y-%m-%d")
-        #     self.rebalance_periods = self.rebalance_schedule
-        # else:
-        #     self.start_date = self.config["start_date"]
-        #     self.end_date = self.config["end_date"]
-        #
-        # self.data_feed.reset_feed(
-        #     start_dt=(
-        #             pd.to_datetime(self.start_date)
-        #             - timedelta(days=self.config["busday_offset_start"])
-        #     ).strftime("%Y-%m-%d"),
-        #     end_dt=self.end_date,
-        # )
-        # if self.rebalance_schedule is None:
-        #     self.rebalance_periods = [
-        #         idx
-        #         for idx in self.data_feed.get_data_idx()
-        #         if idx >= pd.to_datetime(self.start_date)
-        #     ]
-        # if isinstance(self.rebalance_schedule, RebalancingSchedule):
-        #     self.rebalance_schedule.set_start_and_end(
-        #         start_date=self.start_date, end_date=self.end_date
-        #     )
-        #     schedule = self.rebalance_schedule.schedule()
-        #     self.rebalance_periods = schedule
         self._seed()
 
     def reset(self):
@@ -70,8 +42,8 @@ class BaseEnv(gym.Env, ABC):
         self.done = False
 
         # initialize reward
-        self.day = 0
-        self.date = self.data_feed.start_date
+        self.date = self.config["broker"]["start_date"]
+        self.day = self.data_feed.get_idx(self.date)
         self.reward = 0
         self.cost = 0
         self.trades = 0
@@ -88,8 +60,8 @@ class BaseEnv(gym.Env, ABC):
         self.actions_memory = []
 
         # reset the portfolios
-        self.broker.reset(self.rl_portfolio)
-        self.broker.reset(self.benchmark_portfolio)
+        self.broker.reset(self.rl_portfolio, self.day)
+        self.broker.reset(self.benchmark_portfolio, self.day)
         # initialize state
         self.state = self.build_observation(self.day)
         # return self.state
@@ -103,7 +75,7 @@ class BaseEnv(gym.Env, ABC):
                 inds = indicator.calc()
                 obs = np.append(obs, inds, axis=0)
         # prices = self.data_feed.get_price_data(day, offset=self.obs_price_hist)
-        obs = np.append(obs, self.data_feed.get_prices_snapshot_array(), axis=0).flatten(order="F")
+        obs = np.append(obs, self.data_feed.get_prices_snapshot_array(day), axis=0).flatten(order="F")
         # obs = np.append(obs, self.current_holdings)  # attach current holdings # TODO add current holdings
         # obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value # TODO add last portfolio value
         return obs
@@ -113,11 +85,11 @@ class BaseEnv(gym.Env, ABC):
         # transform actions to units
         actions = self._convert_action(actions)
         self.actions_memory.append(actions)
-        trades = self.actions_to_trades(actions)  # TODO: rename actions_to_ideal_weights_delta
+        delta = self.actions_to_ideal_weights_delta(actions)
         # TODO: function in the broker which takes delta weights and modifies the ideal weight of the RL portfolio
         # execute trades
-        dt, prices = self.data_feed.get_prices_snapshot()
-        self.broker.rebalance(dt, prices)
+        dt, prices = self.data_feed.get_prices_snapshot(idx=self.day)
+        self.broker.rebalance(dt, prices, delta)
 
         self.reward = self.reward_func()
         self.reward = self.reward * self.reward_scaling  # scale reward
@@ -136,7 +108,7 @@ class BaseEnv(gym.Env, ABC):
         action = action - 1
         return action
 
-    def actions_to_trades(self, actions):
+    def actions_to_ideal_weights_delta(self, actions):
         """Converts actions to portfolio weights
         # TODO: make the trade factor configurable
         The current setup normalizes the weights to sum to 1."""
