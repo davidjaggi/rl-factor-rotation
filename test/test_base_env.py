@@ -15,19 +15,19 @@ config = {
     'benchmark_portfolio': {
         'name': 'benchmark_portfolio',
         'rebalancing_type': "equally_weighted",
-        'initial_balance': 10000,
+        'investment_universe': ["GOOGL.O", "AAPL.O"],
+        'initial_balance': 100000,
         'initial_weights': [0.5, 0.5],
         'restrictions': dict(),
-        'start_date': '2020-02-24',
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'rl_portfolio': {
         'name': 'rl_portfolio',
         'rebalancing_type': None,
-        'initial_balance': 10000,
+        'investment_universe': ["GOOGL.O", "AAPL.O"],
+        'initial_balance': 100000,
         'initial_weights': [0.5, 0.5],
         'restrictions': dict(),
-        'start_date': '2020-02-24',
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'broker': {
@@ -59,13 +59,18 @@ class TestBaseEnv(unittest.TestCase):
 
     def test_reset(self):
         self.env.reset()
-        assert self.env.day == 0
         print(self.env.broker)
 
-    def test_step(self):
+    def test_one_step(self):
         self.env.reset()
         action = self.env.action_space.sample()
         obs, rew, done, _ = self.env.step(action)
         assert done == False
-        assert action == 0
         assert rew == 100
+
+    def test_five_steps(self):
+        self.env.reset()
+        for i in range(5):
+            action = self.env.action_space.sample()
+            obs, rew, done, _ = self.env.step(action)
+        assert done == False
