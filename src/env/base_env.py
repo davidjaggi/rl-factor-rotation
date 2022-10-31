@@ -48,14 +48,8 @@ class BaseEnv(gym.Env, ABC):
         self.cost = 0
         self.trades = 0
         self.episode = 0
-        # self.current_holdings = np.zeros(self.data_feed.num_assets)
-        # self.current_weights = self.config["initial_weights"]
-        # self.current_holdings_bmk = np.zeros(self.data_feed.num_assets)
 
         # memorize changes
-        # self.asset_memory = [self.initial_balance]
-        # self.bmk_memory = [self.initial_balance]
-        # self.date_memory = [self.rebalance_periods[0]]
         self.rewards_memory = []
         self.actions_memory = []
 
@@ -84,12 +78,13 @@ class BaseEnv(gym.Env, ABC):
         assert self.done is False, "reset() must be called before step()"
         # transform actions to units
         self.actions_memory.append(actions)
-        delta = self.actions_to_ideal_weights_delta(self.broker.rl_portfolio, actions)
+        delta = self.actions_to_ideal_weights_delta(self.rl_portfolio, actions)
 
-        self.broker.update_ideal_weights(self.broker.rl_portfolio, delta)
+        self.broker.update_ideal_weights(self.rl_portfolio, delta)
         # execute trades
         dt, prices = self.data_feed.get_prices_snapshot(idx=self.day)
-        self.broker.rebalance(dt, prices)
+        self.broker.rebalance(dt, prices, self.rl_portfolio)
+        self.broker.rebalance(dt, prices, self.benchmark_portfolio)
 
         self.reward = self.reward_func()
         self.reward = self.reward * self.reward_scaling  # scale reward
@@ -98,7 +93,7 @@ class BaseEnv(gym.Env, ABC):
         # state: s -> s+1
         self.day += 1
         # self.state = self.build_observation(self.rebalance_periods[self.day]) # TODO: implement state
-        # self.done = self.day >= len(self.rebalance_periods) - 1 # TODO: implement done
+        self.done = self.day >= len(self.data_feed.dates) - 1
 
         return self.state, self.reward, self.done, {}
 
@@ -106,9 +101,6 @@ class BaseEnv(gym.Env, ABC):
         """Converts actions to portfolio weights
         # TODO: make the trade factor configurable
         The current setup normalizes the weights to sum to 1."""
-        # action -1 is sell 5 % of asset 1
-        # action 0 is hold both assets
-        # action 1 is buy 5% of asset 1
         n_assets = len(portfolio.investment_universe)
 
         if actions == 0:
@@ -117,27 +109,6 @@ class BaseEnv(gym.Env, ABC):
             delta = {asset: -0.05 / (n_assets - 1) for asset in portfolio.investment_universe}
             delta[portfolio.investment_universe[actions - 1]] = 0.05
         return delta
-
-    def weights_to_shares(self, trades, current_weights, current_val, current_holding):
-        """Logic for transforming raw actions into number of shares for each asset"""
-        asset_prices = self.current_prices.iloc[0, :].to_numpy()
-        if trades is None:
-            new_weights = current_weights
-        else:
-            new_weights = np.add(trades, current_weights)
-            # normalize weights
-            new_weights = new_weights / np.sum(new_weights)
-
-        asset_values = new_weights * current_val
-        units_gross = asset_values / asset_prices
-        costs = (
-                np.abs(units_gross - current_holding)
-                * asset_prices
-                * self.cost_pct
-        )
-        units_net = (asset_values - costs) / asset_prices
-        weights = (units_net * asset_prices) / np.sum(units_net * asset_prices)
-        return weights, units_net, np.sum(costs)
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)

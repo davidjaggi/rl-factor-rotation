@@ -11,8 +11,6 @@ class Broker(ABC):
     def __init__(self, data_feed, config):
         self.data_feed = data_feed
         self.config = config # TODO: This makes it so that we store the portfolios twice, once in the config and again in the Broker, I suggest we delete it.
-        self.benchmark_portfolio = self.config['benchmark_portfolio']
-        self.rl_portfolio = self.config['rl_portfolio']
         self.transaction_cost = self.config['transaction_cost']
         self.start_date = self.config['start_date']
         self.hist_dict = self._create_hist_dict()
@@ -26,7 +24,7 @@ class Broker(ABC):
         return {'benchmark': [],
                 'rl': []}
 
-    def reset(self, portfolio: Portfolio, idx=0):
+    def reset(self, portfolio, idx=0):
         """ Resetting the Broker class """
         self.data_feed.reset(start_dt=self.start_date, end_dt=None)
         dt, prices = self.data_feed.get_prices_snapshot(idx)
@@ -48,19 +46,18 @@ class Broker(ABC):
         self.hist_dict['historical_asset_prices'] = []
         # update to the first instance of the datafeed & record this
         portfolio.reset(self.start_date, prices)
-        self._record_prices(prices, dt, idx)
+        self._record_prices(prices, dt)
         # record the initial positions of the portfolio
         self._record_positions(portfolio)
         return portfolio
 
-    def update_ideal_weights(self, portfolio: Portfolio, delta):
+    def update_ideal_weights(self, portfolio, delta):
         for key, value in portfolio.ideal_weights.items():
             portfolio.ideal_weights[key] = value + delta[key]
 
-    def _record_prices(self, prices, dt, idx):
+    def _record_prices(self, prices, dt):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
         self.hist_dict['historical_asset_prices'].append(({'timestamp': dt,
-                                                           'index': idx,
                                                            'prices': prices}))
 
     def _record_positions(self, portfolio):
@@ -77,10 +74,9 @@ class Broker(ABC):
             self.hist_dict['rl']['positions'].append(portfolio.positions)
             self.hist_dict['rl']['cash'] = portfolio.cash_position
 
-    def rebalance(self, date, prices):  # TODO: rename function to rebalance_and_log
+    def rebalance(self, date, prices, portfolio):  # TODO: rename function to rebalance_and_log
         # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
-        self.rebalance_portfolio(date, prices, self.benchmark_portfolio)
-        self.rebalance_portfolio(date, prices, self.rl_portfolio)
+        self.rebalance_portfolio(date, prices, portfolio)
         # record the prices for the specific period
         self._record_prices(prices, date)
 
