@@ -154,6 +154,7 @@ class CSVDataFeed(Feed):
 
             return date, prices
         else:
+            # TODO: implement offset to return more historic prices
             pass
 
     def get_dates(self):

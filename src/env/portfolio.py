@@ -18,6 +18,7 @@ class Portfolio(ABC):
         # TODO: extract all variables of the config to the init method
         self.initial_balance = config["initial_balance"]
         self.cash_position = config["initial_balance"]
+        self.investment_universe = config["investment_universe"]
         self.restrictions = config["restrictions"]
         self.rebalancing_schedule = config["rebalancing_schedule"]
         self.rebalancing_type = config["rebalancing_type"]
@@ -69,15 +70,11 @@ class Portfolio(ABC):
 
 
 class BenchmarkPortfolio(Portfolio):
-
     def __init__(self, *args, **kwargs):
         super(BenchmarkPortfolio, self).__init__(*args, **kwargs)
-        self.ideal_weights = [0.5, 0.5]
-
+        self.ideal_weights = {asset: 1 / len(self.investment_universe) for asset in self.investment_universe}
 class RLPortfolio(Portfolio):
 
     def __init__(self, *args, **kwargs):
         super(RLPortfolio, self).__init__(*args, **kwargs)
-
-        if self.rebalancing_type == "equally_weighted":
-            self.ideal_weights = [0.5, 0.5]  # TODO move to 1/n
+        self.ideal_weights = {asset: 1 / len(self.investment_universe) for asset in self.investment_universe}

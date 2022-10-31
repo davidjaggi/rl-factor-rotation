@@ -53,12 +53,15 @@ class Broker(ABC):
         self._record_positions(portfolio)
         return portfolio
 
+    def update_ideal_weights(self, portfolio: Portfolio, delta):
+        for key, value in portfolio.ideal_weights.items():
+            portfolio.ideal_weights[key] = value + delta[key]
+
     def _record_prices(self, prices, dt, idx):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
         self.hist_dict['historical_asset_prices'].append(({'timestamp': dt,
                                                            'index': idx,
                                                            'prices': prices}))
-
 
     def _record_positions(self, portfolio):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
@@ -74,14 +77,14 @@ class Broker(ABC):
             self.hist_dict['rl']['positions'].append(portfolio.positions)
             self.hist_dict['rl']['cash'] = portfolio.cash_position
 
-    def rebalance(self, date, prices, delta):  # TODO: rename function to rebalance_and_log
+    def rebalance(self, date, prices):  # TODO: rename function to rebalance_and_log
         # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
-        self.rebalance_portfolio(date, prices, delta, self.benchmark_portfolio)
-        self.rebalance_portfolio(date, prices, delta, self.rl_portfolio)
+        self.rebalance_portfolio(date, prices, self.benchmark_portfolio)
+        self.rebalance_portfolio(date, prices, self.rl_portfolio)
         # record the prices for the specific period
-        self._record_prices(prices, date, delta)
+        self._record_prices(prices, date)
 
-    def rebalance_portfolio(self, date, prices, delta, portfolio: Portfolio):
+    def rebalance_portfolio(self, date, prices, portfolio: Portfolio):
         # In the first step we want to take the ideal weights of the portfolio and adjust them
 
         # check if the current date is equal to a rebalance date
@@ -136,15 +139,7 @@ class Broker(ABC):
                         portfolio.cash_position += -prices[asset]
 
             # Record the trades in the trade logs
-            self._record_positions(portfolio)
-
-        # TODO: record the trades and prices in the hist_dict
-        else:
-            # TODO: calculate the weights
-            # TODO: adjust the weights to the ideal weights
-            # TODO: record the prices etc.
-            # record the prices
-            pass
+        self._record_positions(portfolio)
 
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,

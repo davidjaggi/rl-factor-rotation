@@ -83,13 +83,13 @@ class BaseEnv(gym.Env, ABC):
     def step(self, actions):
         assert self.done is False, "reset() must be called before step()"
         # transform actions to units
-        actions = self._convert_action(actions)
         self.actions_memory.append(actions)
-        delta = self.actions_to_ideal_weights_delta(actions)
-        # TODO: function in the broker which takes delta weights and modifies the ideal weight of the RL portfolio
+        delta = self.actions_to_ideal_weights_delta(self.broker.rl_portfolio, actions)
+
+        self.broker.update_ideal_weights(self.broker.rl_portfolio, delta)
         # execute trades
         dt, prices = self.data_feed.get_prices_snapshot(idx=self.day)
-        self.broker.rebalance(dt, prices, delta)
+        self.broker.rebalance(dt, prices)
 
         self.reward = self.reward_func()
         self.reward = self.reward * self.reward_scaling  # scale reward
@@ -102,28 +102,21 @@ class BaseEnv(gym.Env, ABC):
 
         return self.state, self.reward, self.done, {}
 
-    def _convert_action(self, action):
-        """Used if actions need to be transformed without having to change entire step() method"""
-        # let's convert the actions so the one with the higher value is bought and the other is sold
-        action = action - 1
-        return action
-
-    def actions_to_ideal_weights_delta(self, actions):
+    def actions_to_ideal_weights_delta(self, portfolio, actions):
         """Converts actions to portfolio weights
         # TODO: make the trade factor configurable
         The current setup normalizes the weights to sum to 1."""
         # action -1 is sell 5 % of asset 1
         # action 0 is hold both assets
         # action 1 is buy 5% of asset 1
-        if actions == -1:
-            return np.array([-0.05, 0.05])
-        elif actions == 0:
-            return np.zeros(2)
-        elif actions == 1:
-            return np.array([0.05, -0.05])
-        else:
-            raise ValueError("Invalid action: {}".format(actions))
+        n_assets = len(portfolio.investment_universe)
 
+        if actions == 0:
+            delta = {asset: 0 for asset in portfolio.investment_universe}
+        else:
+            delta = {asset: -0.05 / (n_assets - 1) for asset in portfolio.investment_universe}
+            delta[portfolio.investment_universe[actions - 1]] = 0.05
+        return delta
 
     def weights_to_shares(self, trades, current_weights, current_val, current_holding):
         """Logic for transforming raw actions into number of shares for each asset"""

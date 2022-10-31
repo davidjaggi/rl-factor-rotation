@@ -15,6 +15,7 @@ config = {
     'benchmark_portfolio': {
         'name': 'benchmark_portfolio',
         'rebalancing_type': "equally_weighted",
+        'investment_universe': ["GOOGL.O", "AAPL.O"],
         'initial_balance': 100000,
         'initial_weights': [0.5, 0.5],
         'restrictions': dict(),
@@ -23,6 +24,7 @@ config = {
     'rl_portfolio': {
         'name': 'rl_portfolio',
         'rebalancing_type': None,
+        'investment_universe': ["GOOGL.O", "AAPL.O"],
         'initial_balance': 100000,
         'initial_weights': [0.5, 0.5],
         'restrictions': dict(),
