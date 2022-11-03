@@ -141,21 +141,17 @@ class CSVDataFeed(Feed):
 
         return data_out
 
-    def get_prices_snapshot(self, idx, offset=None):
+    def get_prices_snapshot(self, idx):
         date = self.dates[idx]
-        if offset is None:
-            prices = {}
-            for idx, (asset, price) in enumerate(self.data.items()):
-                prices[asset] = self.data[asset].loc[self.dt]
+        prices = {}
+        for idx, (asset, price) in enumerate(self.data.items()):
+            prices[asset] = self.data[asset].loc[self.dt]
 
-            # And update the dt to the next prices snapshot
-            dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(date)
-            self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
+        # And update the dt to the next prices snapshot
+        dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(date)
+        self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
 
-            return date, prices
-        else:
-            # TODO: implement offset to return more historic prices
-            pass
+        return date, prices
 
     def get_dates(self):
         dates = []
@@ -164,15 +160,17 @@ class CSVDataFeed(Feed):
         # return ordered dates
         return sorted(set(dates[0]).intersection(*dates))
 
-    def get_prices_snapshot_array(self, idx):
-        prices = []
-        dt, price_dict = self.get_prices_snapshot(idx)
-        for idx, (asset, price) in enumerate(price_dict.items()):
-            prices.append(price["Price Open"])
+    def get_observations(self, idx, offset=5):
+        date = self.dates[idx]
+        prices = {}
+        for idx, (asset, price) in enumerate(self.data.items()):
+            # take date and offset days before
+            prices[asset] = self.data[asset].loc[date - timedelta(days=offset - 1):date]
+            # fill missing dates with 0
+            prices[asset] = prices[asset].reindex(pd.date_range(date - timedelta(days=offset - 1), date), fill_value=0)
 
-        prices = np.array(prices, dtype=float)[None, :]
-        # convert prices to a 1d array
-        return prices
+        prices_array = [prices[asset]["Price Open"].values for asset in prices.keys()]
+        return prices_array
 
     def get_idx(self, date):
         dt = pd.to_datetime(date)
@@ -420,9 +418,6 @@ class StooqDataFeed(Feed):
             offset=offset,
         )
         return prices
-
-    def get_data(self, end_dt, start_dt=None, offset=None):
-        """return price data from yahoo finance"""
 
     def get_data(self, end_dt, start_dt=None, fields=None, offset=None):
         """returns data for all assets for given fields

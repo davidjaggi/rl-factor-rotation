@@ -55,7 +55,7 @@ class TestBaseEnv(unittest.TestCase):
         self.feed = CSVDataFeed(
             DATA_PATH + "/example_data.csv"
         )
-        self.env = BaseEnv(config=config, data_feed=self.feed, indicator_pipeline=None)
+        self.env = BaseEnv(config=config, data_feed=self.feed, indicator_pipeline=[])
 
     def test_reset(self):
         self.env.reset()

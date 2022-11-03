@@ -16,8 +16,7 @@ class BaseEnv(gym.Env, ABC):
     """
 
     def __init__(
-            self, config=None, data_feed=None, indicator_pipeline=None
-    ):
+            self, config=None, data_feed=None, indicator_pipeline=[]):
         """Initialises the class"""
         self.config = config
         self.data_feed = data_feed
@@ -57,21 +56,23 @@ class BaseEnv(gym.Env, ABC):
         self.broker.reset(self.rl_portfolio, self.day)
         self.broker.reset(self.benchmark_portfolio, self.day)
         # initialize state
-        self.state = self.build_observation(self.day)
+        self.state = self.build_observation()
         # return self.state
 
-    def build_observation(self, day):
-        """ Builds the observation space """
-        obs = np.empty((0, self.data_feed.num_assets), float)
+    def build_observation(self):
+
+        prices = self.data_feed.get_observations(self.day, offset=self.obs_price_hist)
+        # create observation space with prices and indicators
+        obs = prices
         if self.indicator_pipeline is not None:
             # this will have to be built first
-            for indicator in self.indicator_pipeline.indicators:
-                inds = indicator.calc()
-                obs = np.append(obs, inds, axis=0)
-        # prices = self.data_feed.get_price_data(day, offset=self.obs_price_hist)
-        obs = np.append(obs, self.data_feed.get_prices_snapshot_array(day), axis=0).flatten(order="F")
+            if len(self.indicator_pipeline) > 0:
+                for indicator in self.indicator_pipeline.indicators:
+                    inds = indicator.calc()
+                    obs = np.append(obs, inds, axis=0)
         # obs = np.append(obs, self.current_holdings)  # attach current holdings # TODO add current holdings
         # obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value # TODO add last portfolio value
+
         return obs
 
     def step(self, actions):
@@ -92,7 +93,7 @@ class BaseEnv(gym.Env, ABC):
 
         # state: s -> s+1
         self.day += 1
-        # self.state = self.build_observation(self.rebalance_periods[self.day]) # TODO: implement state
+        self.state = self.build_observation()
         self.done = self.day >= len(self.data_feed.dates) - 1
 
         return self.state, self.reward, self.done, {}
