@@ -24,53 +24,54 @@ class Broker(ABC):
         return {'benchmark': [],
                 'rl': []}
 
-    def reset(self, portfolio, idx=0):
+    def reset(self, portfolio, idx: int):
         """ Resetting the Broker class """
         self.data_feed.reset(start_dt=self.start_date, end_dt=None)
-        dt, prices = self.data_feed.get_prices_snapshot(idx)
+        prices = self.data_feed.get_prices_snapshot(idx)
+        date = self.data_feed.get_date(idx)
 
         # reset the Broker logs
         if type(portfolio).__name__ != 'RLPortfolio':
             self.hist_dict['benchmark']['timestamp'] = []
             self.hist_dict['benchmark']['positions'] = []
             self.trade_logs['benchmark'] = []
-            self.current_dt_bmk = dt
 
         else:
             self.hist_dict['rl']['timestamp'] = []
             self.hist_dict['rl']['positions'] = []
             self.trade_logs['rl'] = []
-            self.current_dt_rl = dt
 
         # reset the historical asset prices
         self.hist_dict['historical_asset_prices'] = []
         # update to the first instance of the datafeed & record this
         portfolio.reset(self.start_date, prices)
-        self._record_prices(prices, dt)
+        self._record_prices(prices, date)
         # record the initial positions of the portfolio
-        self._record_positions(portfolio)
+        self._record_positions(portfolio, date)
         return portfolio
 
     def update_ideal_weights(self, portfolio, delta):
         for key, value in portfolio.ideal_weights.items():
             portfolio.ideal_weights[key] = value + delta[key]
 
-    def _record_prices(self, prices, dt):
+    def _record_prices(self, prices, date):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
-        self.hist_dict['historical_asset_prices'].append(({'timestamp': dt,
+        # filter prices to only contain Price Open
+        prices = {k: v['Price Open'] for k, v in prices.items()}
+        self.hist_dict['historical_asset_prices'].append(({'timestamp': date,
                                                            'prices': prices}))
 
-    def _record_positions(self, portfolio):
+    def _record_positions(self, portfolio, date):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
         if type(portfolio).__name__ != 'RLPortfolio':
 
-            self.hist_dict['benchmark']['timestamp'].append(portfolio.dt)
+            self.hist_dict['benchmark']['timestamp'].append(date)
             self.hist_dict['benchmark']['positions'].append(portfolio.positions)
             self.hist_dict['benchmark']['cash'] = portfolio.cash_position
 
         else:
 
-            self.hist_dict['rl']['timestamp'].append(portfolio.dt)
+            self.hist_dict['rl']['timestamp'].append(date)
             self.hist_dict['rl']['positions'].append(portfolio.positions)
             self.hist_dict['rl']['cash'] = portfolio.cash_position
 
@@ -135,7 +136,7 @@ class Broker(ABC):
                         portfolio.cash_position += -prices[asset]
 
             # Record the trades in the trade logs
-        self._record_positions(portfolio)
+        self._record_positions(portfolio, date)
 
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,

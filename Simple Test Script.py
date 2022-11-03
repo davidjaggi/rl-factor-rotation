@@ -1,6 +1,5 @@
 # %%
 import random
-import unittest
 
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
@@ -48,30 +47,18 @@ config = {
 config['broker']['rl_portfolio'] = RLPortfolio(config['rl_portfolio'])
 config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_portfolio'])
 
+# %%
+random.seed(1)
+feed = CSVDataFeed(
+    DATA_PATH + "/example_data.csv"
+)
+env = BaseEnv(config=config, data_feed=feed, indicator_pipeline=[])
 
-class TestBaseEnv(unittest.TestCase):
-    def setUp(self) -> None:
-        random.seed(1)
-        self.feed = CSVDataFeed(
-            DATA_PATH + "/example_data.csv"
-        )
-        self.env = BaseEnv(config=config, data_feed=self.feed, indicator_pipeline=[])
-
-    def test_reset(self):
-        self.env.reset()
-        print(self.env.broker)
-
-    def test_one_step(self):
-        self.env.reset()
-        action = self.env.action_space.sample()
-        obs, rew, done, _ = self.env.step(action)
-        assert done == False
-        assert rew == 100
-
-    def test_five_steps(self):
-        self.env.reset()
-        for i in range(5):
-            action = self.env.action_space.sample()
-            obs, rew, done, _ = self.env.step(action)
-        assert done == False
-        assert len(self.env.actions_memory) == 5
+env.reset()
+for i in range(5):
+    print(env.day)
+    print(env.date)
+    action = env.action_space.sample()
+    obs, rew, done, _ = env.step(action)
+# %%
+env.broker.hist_dict

@@ -57,6 +57,8 @@ class BaseEnv(gym.Env, ABC):
         self.broker.reset(self.benchmark_portfolio, self.day)
         # initialize state
         self.state = self.build_observation()
+        # add one day
+        self.day += 1
         # return self.state
 
     def build_observation(self):
@@ -78,14 +80,15 @@ class BaseEnv(gym.Env, ABC):
     def step(self, actions):
         assert self.done is False, "reset() must be called before step()"
         # transform actions to units
+        self.date = self.data_feed.get_date(self.day)
         self.actions_memory.append(actions)
         delta = self.actions_to_ideal_weights_delta(self.rl_portfolio, actions)
 
         self.broker.update_ideal_weights(self.rl_portfolio, delta)
         # execute trades
-        dt, prices = self.data_feed.get_prices_snapshot(idx=self.day)
-        self.broker.rebalance(dt, prices, self.rl_portfolio)
-        self.broker.rebalance(dt, prices, self.benchmark_portfolio)
+        prices = self.data_feed.get_prices_snapshot(idx=self.day)
+        self.broker.rebalance(self.date, prices, self.rl_portfolio)
+        self.broker.rebalance(self.date, prices, self.benchmark_portfolio)
 
         self.reward = self.reward_func()
         self.reward = self.reward * self.reward_scaling  # scale reward

@@ -151,7 +151,7 @@ class CSVDataFeed(Feed):
         dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(date)
         self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
 
-        return date, prices
+        return prices
 
     def get_dates(self):
         dates = []
@@ -175,6 +175,9 @@ class CSVDataFeed(Feed):
     def get_idx(self, date):
         dt = pd.to_datetime(date)
         return self.dates.index(dt)
+
+    def get_date(self, idx):
+        return self.dates[idx]
 
 
 class GBMtwoAssetsFeed(object):
