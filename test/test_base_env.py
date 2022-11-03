@@ -75,3 +75,19 @@ class TestBaseEnv(unittest.TestCase):
             obs, rew, done, _ = self.env.step(action)
         assert done == False
         assert len(self.env.actions_memory) == 5
+
+    def test_100_steps(self):
+        self.env.reset()
+        for i in range(100):
+            action = self.env.action_space.sample()
+            obs, rew, done, _ = self.env.step(action)
+        assert done == False
+        assert len(self.env.actions_memory) == 100
+
+    def test_done(self):
+        self.env.reset()
+        done = False
+        while done == False:
+            action = self.env.action_space.sample()
+            obs, rew, done, _ = self.env.step(action)
+        assert done == True
