@@ -8,6 +8,7 @@ from gym.utils import seeding
 
 from src.env.broker import Broker
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
+#from src.env.plotting import Plot
 
 
 class BaseEnv(gym.Env, ABC):
@@ -98,6 +99,8 @@ class BaseEnv(gym.Env, ABC):
         self.day += 1
         self.state = self.build_observation()
         self.done = self.day >= len(self.data_feed.dates) - 1
+
+        #self.plot = Plot(self.hist_dict)
 
         return self.state, self.reward, self.done, {}
 

@@ -74,7 +74,6 @@ class TestBroker(unittest.TestCase):
                                                               end_date=bench_config['end_date'])}
         rl_portfolio = RLPortfolio(rl_config)
         self.broker.reset(rl_portfolio)
-
         pass
 
     def test_initial_weights(self):

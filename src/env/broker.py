@@ -170,4 +170,3 @@ class Broker(ABC):
             portfolio_weights[asset] = portfolio_values[asset]/portfolio_values['total_value']
 
         return portfolio_values, portfolio_weights
-

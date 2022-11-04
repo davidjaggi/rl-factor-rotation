@@ -6,6 +6,7 @@ from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.base_env import BaseEnv
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.utils.load_path import load_data_path
+from src.env.plotting import pltt
 
 DATA_PATH = load_data_path()
 # %%
@@ -60,5 +61,7 @@ for i in range(5):
     print(env.date)
     action = env.action_space.sample()
     obs, rew, done, _ = env.step(action)
+
 # %%
 env.broker.hist_dict
+res_bm, res_rl = pltt() # placeholder because simulating data
