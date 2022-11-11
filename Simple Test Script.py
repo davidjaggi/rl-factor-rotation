@@ -55,10 +55,12 @@ feed = CSVDataFeed(
 env = BaseEnv(config=config, data_feed=feed, indicator_pipeline=[])
 
 env.reset()
-for i in range(5):
-    print(env.day)
-    print(env.date)
+done = False
+while not done:
     action = env.action_space.sample()
     obs, rew, done, _ = env.step(action)
 # %%
 env.broker.hist_dict
+# %%
+env.broker.hist_dict["benchmark"].keys()
+# %%

@@ -138,7 +138,7 @@ class Broker(ABC):
             # Record the trades in the trade logs
         self._record_positions(portfolio, date)
 
-    def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
+    def get_trades_for_rebalance(self, portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
         ideal_weights and rebalancing_type.
         """
@@ -167,7 +167,16 @@ class Broker(ABC):
         portfolio_values['total_value'] = sum(portfolio.values())
 
         for i, (asset, position_value) in enumerate(portfolio_values):
-            portfolio_weights[asset] = portfolio_values[asset]/portfolio_values['total_value']
+            portfolio_weights[asset] = portfolio_values[asset] / portfolio_values['total_value']
 
         return portfolio_values, portfolio_weights
 
+    def get_portfolio_value(self, portfolio, prices):
+        portfolio_values = {}
+        # only take "Price Open" to derive the portfolio value
+        prices = {k: v['Price Open'] for k, v in prices.items()}
+        for i, (asset, position) in enumerate(portfolio.positions.items()):
+            portfolio_values[asset] = position * prices[asset]
+
+        portfolio_values['total_value'] = sum(portfolio_values.values())
+        return portfolio_values['total_value']
