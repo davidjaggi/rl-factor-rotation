@@ -75,7 +75,6 @@ class BaseEnv(gym.Env, ABC):
                     obs = np.append(obs, inds, axis=0)
         # obs = np.append(obs, self.current_holdings)  # attach current holdings # TODO add current holdings
         # obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value # TODO add last portfolio value
-
         return obs
 
     def step(self, actions):
@@ -91,7 +90,7 @@ class BaseEnv(gym.Env, ABC):
         self.broker.rebalance(self.date, prices, self.rl_portfolio)
         self.broker.rebalance(self.date, prices, self.benchmark_portfolio)
 
-        self.reward = self.reward_func()
+        self.reward = self.reward_func(prices)
         self.reward = self.reward * self.reward_scaling  # scale reward
         self.rewards_memory.append(self.reward)
 
@@ -193,13 +192,13 @@ class BaseEnv(gym.Env, ABC):
 
     def build_action_space(self):
         # return three discrete action
-        # action 0 do nothing
-        # action 1 buy asset 1
-        # action 2 buy asset 2
         return gym.spaces.Discrete(3)
 
-    def reward_func(self):
+    def reward_func(self, prices):
         """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""
         # TODO: implement correct reward function
         reward = 100
+        rl_value = self.broker.get_portfolio_value(self.rl_portfolio, prices)
+        bm_value = self.broker.get_portfolio_value(self.benchmark_portfolio, prices)
+        reward = rl_value - bm_value
         return reward
