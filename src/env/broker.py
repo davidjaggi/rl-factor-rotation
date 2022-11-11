@@ -17,8 +17,9 @@ class Broker(ABC):
         self.trade_logs = self._create_trade_logs()
 
     def _create_hist_dict(self):
-        return {'benchmark': {'timestamp': [], 'positions': [], 'cash': []},
-                'rl': {'timestamp': [], 'positions': [], 'cash': []}, 'historical_asset_prices': []}
+        return {'benchmark': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [], 'portfolio_weights': []},
+                'rl': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [], 'portfolio_weights': []},
+                'historical_asset_prices': []}
 
     def _create_trade_logs(self):
         return {'benchmark': [],
@@ -32,17 +33,19 @@ class Broker(ABC):
 
         # reset the Broker logs
         if type(portfolio).__name__ != 'RLPortfolio':
-            self.hist_dict['benchmark']['portfolio_values'] = []
-            self.hist_dict['benchmark']['portfolio_weights'] = []
+
             self.hist_dict['benchmark']['timestamp'] = []
             self.hist_dict['benchmark']['positions'] = []
+            self.hist_dict['benchmark']['portfolio_values'] = []
+            self.hist_dict['benchmark']['portfolio_weights'] = []
             self.trade_logs['benchmark'] = []
 
         else:
-            self.hist_dict['rl']['portfolio_values'] = []
-            self.hist_dict['rl']['portfolio_weights'] = []
+
             self.hist_dict['rl']['timestamp'] = []
             self.hist_dict['rl']['positions'] = []
+            self.hist_dict['rl']['portfolio_values'] = []
+            self.hist_dict['rl']['portfolio_weights'] = []
             self.trade_logs['rl'] = []
 
         # reset the historical asset prices
@@ -81,16 +84,16 @@ class Broker(ABC):
             self.hist_dict['benchmark']['timestamp'].append(date)
             self.hist_dict['benchmark']['positions'].append(portfolio.positions)
             self.hist_dict['benchmark']['cash'].append(portfolio.cash_position)
-            self.hist_dict['benchmark']['weight'].append(portfolio.portfolio_weights)
-            self.hist_dict['benchmark']['values'].append(portfolio.portfolio_values)
+            self.hist_dict['benchmark']['portfolio_weights'].append(portfolio.portfolio_weights)
+            self.hist_dict['benchmark']['portfolio_values'].append(portfolio.portfolio_values)
 
         else:
 
             self.hist_dict['rl']['timestamp'].append(date)
             self.hist_dict['rl']['positions'].append(portfolio.positions)
             self.hist_dict['rl']['cash'].append(portfolio.cash_position)
-            self.hist_dict['rl']['weight'].append(portfolio.portfolio_weights)
-            self.hist_dict['rl']['values'].append(portfolio.portfolio_values)
+            self.hist_dict['rl']['portfolio_weights'].append(portfolio.portfolio_weights)
+            self.hist_dict['rl']['portfolio_values'].append(portfolio.portfolio_values)
 
     def rebalance(self, date, prices, portfolio):  # TODO: rename function to rebalance_and_log
         # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
