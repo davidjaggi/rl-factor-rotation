@@ -24,7 +24,7 @@ class Broker(ABC):
         return {'benchmark': [],
                 'rl': []}
 
-    def reset(self, portfolio, portfolio_weights, portfolio_values, idx: int):
+    def reset(self, portfolio, idx: int):
         """ Resetting the Broker class """
         self.data_feed.reset(start_dt=self.start_date, end_dt=None)
         prices = self.data_feed.get_prices_snapshot(idx)
@@ -51,7 +51,7 @@ class Broker(ABC):
         portfolio.reset(self.start_date, prices)
         self._record_prices(prices, date)
         # record the initial positions of the portfolio
-        self._record_positions(portfolio, date, portfolio_weights, portfolio_values)
+        self._record_positions(portfolio, date)
 
         return portfolio
 
@@ -74,7 +74,7 @@ class Broker(ABC):
             pass
 
 
-    def _record_positions(self, portfolio, date, portfolio_weights, portfolio_values):
+    def _record_positions(self, portfolio, date):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
         if type(portfolio).__name__ != 'RLPortfolio':
 
@@ -153,7 +153,7 @@ class Broker(ABC):
                         portfolio.cash_position += -prices[asset]
 
             # Record the trades in the trade logs
-        self._record_positions(portfolio, date, portfolio_weights, portfolio_values)
+        self._record_positions(portfolio, date)
 
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
