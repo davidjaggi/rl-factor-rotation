@@ -54,6 +54,7 @@ class Broker(ABC):
         portfolio.reset(self.start_date, prices)
         self._record_prices(prices, date)
         # record the initial positions of the portfolio
+        portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio, prices)
         self._record_positions(portfolio, date)
 
         return portfolio
@@ -95,11 +96,13 @@ class Broker(ABC):
             self.hist_dict['rl']['portfolio_weights'].append(portfolio.portfolio_weights)
             self.hist_dict['rl']['portfolio_values'].append(portfolio.portfolio_values)
 
+
     def rebalance(self, date, prices, portfolio):  # TODO: rename function to rebalance_and_log
         # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
         self.rebalance_portfolio(date, prices, portfolio)
         # record the prices for the specific period
         self._record_prices(prices, date)
+
 
     def rebalance_portfolio(self, date, prices, portfolio: Portfolio):
         # In the first step we want to take the ideal weights of the portfolio and adjust them
@@ -158,6 +161,7 @@ class Broker(ABC):
             # Record the trades in the trade logs
         self._record_positions(portfolio, date)
 
+
     def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
         ideal_weights and rebalancing_type.
@@ -182,11 +186,27 @@ class Broker(ABC):
         portfolio_values = {}
         portfolio_weights = {}
         for i, (asset, position) in enumerate(portfolio.positions.items()):
-            portfolio_values[asset] = position * prices[asset]
+            portfolio_values[asset] = position * prices[asset]['Price Close']
 
-        portfolio_values['total_value'] = sum(portfolio.values())
+        portfolio_values['total_value'] = sum(portfolio_values.values())
 
-        for i, (asset, position_value) in enumerate(portfolio_values):
+
+        for i, (asset, position_value) in enumerate(portfolio_values.items()):
             portfolio_weights[asset] = portfolio_values[asset]/portfolio_values['total_value']
 
         return portfolio_values, portfolio_weights
+
+
+    def get_portfolio_value(self, portfolio, prices):
+        portfolio_values = {}
+        # only take "Price Open" to derive the portfolio value
+        prices = {k: v['Price Open'] for k, v in prices.items()}
+        for i, (asset, position) in enumerate(portfolio.positions.items()):
+            portfolio_values[asset] = position * prices[asset]
+
+        portfolio_values['total_value'] = sum(portfolio_values.values())
+
+        return portfolio_values['total_value']
+
+
+

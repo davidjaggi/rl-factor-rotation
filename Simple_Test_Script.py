@@ -7,19 +7,19 @@ from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.base_env import BaseEnv
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.utils.load_path import load_data_path
-from src.env.plotting import pltt
+#from src.env.plotting import pltt
 
 DATA_PATH = load_data_path()
 # %%
 
 
-def ret(days):
+def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_scaling, obs_price_hist, weighting_method, training_data):
     config = {
         'benchmark_portfolio': {
             'name': 'benchmark_portfolio',
-            'rebalancing_type': "equally_weighted",
+            'rebalancing_type': weighting_method,
             'investment_universe': ["GOOGL.O", "AAPL.O"],
-            'initial_balance': 100000,
+            'initial_balance': int(initial_balance),
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
@@ -28,7 +28,7 @@ def ret(days):
             'name': 'rl_portfolio',
             'rebalancing_type': None,
             'investment_universe': ["GOOGL.O", "AAPL.O"],
-            'initial_balance': 100000,
+            'initial_balance': int(initial_balance),
             'initial_weights': [0.5, 0.5],
             'restrictions': dict(),
             'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
@@ -36,14 +36,14 @@ def ret(days):
         'broker': {
             "rl_portfolio": None,
             "benchmark_portfolio": None,
-            "start_date": "2018-12-31",
-            "end_date": "2020-12-31",
+            "start_date": start_date,
+            "end_date": end_date,
             "busday_offset_start": 250,
-            "transaction_cost": 0.0005
+            "transaction_cost": transaction_cost
         },
         'agent': {
-            "reward_scaling": 1,
-            "obs_price_hist": 5,
+            "reward_scaling": int(reward_scaling),
+            "obs_price_hist": int(obs_price_hist),
         }
     }
 
@@ -54,7 +54,7 @@ def ret(days):
     # %%
     random.seed(1)
     feed = CSVDataFeed(
-        DATA_PATH + "/example_data.csv"
+        DATA_PATH + training_data
     )
     env = BaseEnv(config=config, data_feed=feed, indicator_pipeline=[])
 
@@ -69,4 +69,3 @@ def ret(days):
 
     return env.broker.hist_dict
 
-#res_bm, res_rl = pltt() # placeholder because simulating data
