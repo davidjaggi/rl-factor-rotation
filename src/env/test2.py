@@ -4,11 +4,13 @@ import random
 import threading
 import time  # to simulate a real time data, time loop
 import datetime
-
+from datetime import datetime, date
 from Simple_Test_Script import ret
 from pandas import Timestamp
 
-hist_dict = ret(125)
+
+hist_dict = ret(125, 10000, date(2018,12,31), date(2020,12,31), 1 , 5, 0.05/100, 'equally_weighted', '/example_data.csv')
+
 
 '''
 hist_dict = {'benchmark':
@@ -67,6 +69,7 @@ cash_rl = pd.DataFrame(hist_dict.get('rl').get('cash'))
 positions_rl = pd.DataFrame(hist_dict.get('rl').get('positions'))
 portfolio_values_rl = pd.DataFrame(hist_dict.get('benchmark').get('portfolio_values'))
 portfolio_weights_rl = pd.DataFrame(hist_dict.get('benchmark').get('portfolio_weights'))
+
 
 historical_prices = pd.DataFrame()
 col_assets = list(hist_dict['historical_asset_prices'][0]['prices'].keys())

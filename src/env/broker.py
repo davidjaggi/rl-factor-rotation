@@ -104,7 +104,7 @@ class Broker(ABC):
         self._record_prices(prices, date)
 
 
-    def rebalance_portfolio(self, date, prices, portfolio: Portfolio):
+    def rebalance_portfolio(self, date, prices, portfolio):
         # In the first step we want to take the ideal weights of the portfolio and adjust them
 
         # check if the current date is equal to a rebalance date
@@ -132,7 +132,7 @@ class Broker(ABC):
                 else:
                     outgoing_cash += transaction_dict['transaction_value']
 
-            while incoming_cash + portfolio.cash_position < outgoing_cash:
+            while incoming_cash + portfolio.cash_position < outgoing_cash:  # TODO: is the "+" correct?!
                 # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
                 for i, (asset, transaction) in enumerate(rebalance_dict.items()):
                     if incoming_cash + portfolio.cash_position < outgoing_cash and transaction['transaction_shares'] > 0:
@@ -149,20 +149,23 @@ class Broker(ABC):
             portfolio.cash_position += incoming_cash - outgoing_cash
 
             # TODO: If the cash position left is bigger than the price of some of the buys, we scale up the buys of the portfolio
+            prices = {k: v['Price Open'] for k, v in prices.items()}
             prices_buys = [price for i, (asset, price) in enumerate(prices.items()) if
                            rebalance_dict[asset]['transaction_shares'] > 0]
-            while portfolio.cash_position > min(prices_buys):
-                for i, (asset, transaction) in enumerate(rebalance_dict.items()):
-                    if portfolio.cash_position > prices[asset] and rebalance_dict[asset]['transaction_shares'] > 0:
-                        # We buy one more share of said asset
-                        portfolio.positions[asset] += 1
-                        portfolio.cash_position += -prices[asset]
+            if prices_buys != []:
+                while portfolio.cash_position > min(prices_buys):
+                    for i, (asset, transaction) in enumerate(rebalance_dict.items()):
+                        if portfolio.cash_position > prices[asset] and rebalance_dict[asset]['transaction_shares'] > 0:
+                            # We buy one more share of said asset
+                            portfolio.positions[asset] += 1
+                            portfolio.cash_position += -prices[asset]
+
 
             # Record the trades in the trade logs
         self._record_positions(portfolio, date)
 
 
-    def get_trades_for_rebalance(self, portfolio: Portfolio, prices):
+    def get_trades_for_rebalance(self, portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
         ideal_weights and rebalancing_type.
         """
@@ -175,9 +178,10 @@ class Broker(ABC):
         rebalance_dict = {}
 
         for i, (asset, weight) in enumerate(portfolio_weights.items()):
-            transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset] )*portfolio_values['total_value']
-            rebalance_dict[asset] = {'transaction_shares': int(transaction_currency_value/prices[asset])}
-            rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares']*prices[asset]
+            if asset != 'total_value':
+                transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset] ) * portfolio_values['total_value']
+                rebalance_dict[asset] = {'transaction_shares': int(transaction_currency_value/prices[asset]['Price Close'].astype(float))}
+                rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares']*prices[asset]['Price Close'].astype(float)
 
         return rebalance_dict
 
@@ -185,8 +189,9 @@ class Broker(ABC):
     def get_portfolio_value_and_weights(self, portfolio, prices):
         portfolio_values = {}
         portfolio_weights = {}
+        prices = {k: v['Price Open'] for k, v in prices.items()}
         for i, (asset, position) in enumerate(portfolio.positions.items()):
-            portfolio_values[asset] = position * prices[asset]['Price Close']
+            portfolio_values[asset] = position * prices[asset]
 
         portfolio_values['total_value'] = sum(portfolio_values.values())
 
