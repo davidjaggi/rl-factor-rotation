@@ -19,6 +19,7 @@ class RebalancingSchedule(object):
         self.end_date = end_date
         self.rebalancing_dates = []
 
+
     def set_start_and_end(self, start_date, end_date):
         self.start_date = start_date
         self.end_date = end_date
@@ -72,6 +73,10 @@ class PeriodicSchedule(RebalancingSchedule):
         self.skip_year = skip_year
         super().__init__(*args, **kwargs)
         # self.rebalancing_dates = self.schedule()
+
+    def check_rebalance_date(self, start_date, date):
+        dates = pd.date_range(start_date, '2100-01-01', freq=self.frequency)
+        return date in dates
 
     def schedule(self) -> list:
         if self.start_date is None or self.end_date is None:
