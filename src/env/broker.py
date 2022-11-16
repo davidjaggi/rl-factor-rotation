@@ -90,7 +90,7 @@ class Broker(ABC):
         # In the first step we want to take the ideal weights of the portfolio and adjust them
 
         # check if the current date is equal to a rebalance date
-        if portfolio.rebalancing_schedule.check_rebalance_date(date):
+        if portfolio.rebalancing_schedule.check_rebalance_date(self.start_date, date):
 
             rebalance_dict = self.get_trades_for_rebalance(portfolio, prices)
 
