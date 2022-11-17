@@ -1,5 +1,11 @@
 # Reinforcement Learning for Factor Rotation
 
+## Run the server
+
+```bash
+bash run_server.sh
+```
+
 ## Classes
 
 ### Env

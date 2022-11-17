@@ -1,17 +1,14 @@
 # %%
 import random
 
-
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.base_env import BaseEnv
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.utils.load_path import load_data_path
-#from src.env.plotting import pltt
 
 DATA_PATH = load_data_path()
 # %%
-
 
 def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_scaling, obs_price_hist, weighting_method, training_data):
     config = {

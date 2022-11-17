@@ -1,33 +1,25 @@
-
-import random
+# %%
 import sys
 
 # setting path
 sys.path.append('/Users/kiafarokhnia/PycharmProjects/rl-factor-rotation/')
 
-import os
-import time  # to simulate a real time data, time loop
-from datetime import datetime, date
-import numpy as np  # np mean, np random
-import pandas as pd  # read csv, df manipulation
-import plotly.express as px  # interactive charts
+from datetime import date
 import streamlit as st  # 🎈 data web app development
-import random
-import plotting
 
-from Simple_Test_Script import ret
-from dataframe import consolidation
-from dataframe import splitting
+from src.server.runner import ret
+from src.env.dataframe import consolidation
+from src.env.dataframe import splitting
+
 
 def run():
-
-    st.set_page_config(page_title="Real-Time RL Dashboard",  page_icon="✅", layout="wide")
+    st.set_page_config(page_title="Real-Time RL Dashboard", page_icon="✅", layout="wide")
     # dashboard title
     st.title("RL Dashboard")
     days = st.text_input(label='Days', value=125)
     initial_balance = st.text_input(label='Initial balance', value=10000)
-    start_date = st.date_input(label='Start date', value=date(2018,12,31))
-    end_date = st.date_input(label='End date', value=date(2020,12,31))
+    start_date = st.date_input(label='Start date', value=date(2018, 12, 31))
+    end_date = st.date_input(label='End date', value=date(2020, 12, 31))
     reward_scaling = st.number_input(label='Reward scaling', value=1, step = 1)
     obs_price_hist = st.number_input(label='Observation price history', value=5, step=1)
     transaction_cost = float(st.text_input(label='Transaction costs in %', value=0.05))/100

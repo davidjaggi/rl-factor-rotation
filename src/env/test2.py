@@ -1,16 +1,10 @@
+from datetime import date
+
 import pandas as pd
-import datetime
-import random
-import threading
-import time  # to simulate a real time data, time loop
-import datetime
-from datetime import datetime, date
-from Simple_Test_Script import ret
-from pandas import Timestamp
+from server.Simple_Test_Script import ret
 
-
-hist_dict = ret(125, 10000, date(2018,12,31), date(2020,12,31), 1 , 5, 0.05/100, 'equally_weighted', '/example_data.csv')
-
+hist_dict = ret(125, 10000, date(2018, 12, 31), date(2020, 12, 31), 1, 5, 0.05 / 100, 'equally_weighted',
+                '/example_data.csv')
 
 '''
 hist_dict = {'benchmark':
