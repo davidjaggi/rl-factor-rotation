@@ -57,12 +57,8 @@ def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_sc
 
     env.reset()
     for i in range(int(days)):
-        print(env.day)
-        print(env.date)
         action = env.action_space.sample()
         obs, rew, done, _ = env.step(action)
 
-# %%
-
-    return env.broker.hist_dict
-
+    # return the environment
+    return env

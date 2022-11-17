@@ -2,6 +2,7 @@
 import random
 from datetime import date
 
+from src.analyzer.analyzer import Analyzer
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.base_env import BaseEnv
@@ -62,6 +63,8 @@ done = False
 while not done:
     action = env.action_space.sample()
     obs, rew, done, _ = env.step(action)
-    print(env.broker.hist_dict['rl']['portfolio_values'][-1])
 
 # %%
+analyzer = Analyzer(env)
+# %%
+df = analyzer.data
