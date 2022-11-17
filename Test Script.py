@@ -63,7 +63,5 @@ while not done:
     action = env.action_space.sample()
     obs, rew, done, _ = env.step(action)
     print(env.broker.hist_dict['rl']['portfolio_values'][-1])
-    # keyboard enter to continue
-    input("Press Enter to continue...")
 
 # %%

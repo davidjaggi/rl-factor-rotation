@@ -15,7 +15,8 @@ class Broker(ABC):
         self.trade_logs = self._create_trade_logs()
 
     def _create_hist_dict(self):
-        return {'benchmark': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [], 'portfolio_weights': []},
+        return {'benchmark': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [],
+                              'portfolio_weights': []},
                 'rl': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [], 'portfolio_weights': []},
                 'historical_asset_prices': []}
 
@@ -156,8 +157,10 @@ class Broker(ABC):
                             portfolio.positions[asset] += 1
                             portfolio.cash_position += -prices[asset]
 
-
             # Record the trades in the trade logs
+        else:
+            portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
+                                                                                                           prices)
         self._record_positions(portfolio, date)
 
 
