@@ -1,7 +1,5 @@
 from abc import ABC
 
-from src.env.portfolio import Portfolio
-
 
 class Broker(ABC):
     """ Broker class
@@ -17,8 +15,10 @@ class Broker(ABC):
         self.trade_logs = self._create_trade_logs()
 
     def _create_hist_dict(self):
-        return {'benchmark': {'timestamp': [], 'positions': [], 'cash': []},
-                'rl': {'timestamp': [], 'positions': [], 'cash': []}, 'historical_asset_prices': []}
+        return {'benchmark': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [],
+                              'portfolio_weights': []},
+                'rl': {'timestamp': [], 'positions': [], 'cash': [], 'portfolio_values': [], 'portfolio_weights': []},
+                'historical_asset_prices': []}
 
     def _create_trade_logs(self):
         return {'benchmark': [],
@@ -32,13 +32,19 @@ class Broker(ABC):
 
         # reset the Broker logs
         if type(portfolio).__name__ != 'RLPortfolio':
+
             self.hist_dict['benchmark']['timestamp'] = []
             self.hist_dict['benchmark']['positions'] = []
+            self.hist_dict['benchmark']['portfolio_values'] = []
+            self.hist_dict['benchmark']['portfolio_weights'] = []
             self.trade_logs['benchmark'] = []
 
         else:
+
             self.hist_dict['rl']['timestamp'] = []
             self.hist_dict['rl']['positions'] = []
+            self.hist_dict['rl']['portfolio_values'] = []
+            self.hist_dict['rl']['portfolio_weights'] = []
             self.trade_logs['rl'] = []
 
         # reset the historical asset prices
@@ -47,19 +53,28 @@ class Broker(ABC):
         portfolio.reset(self.start_date, prices)
         self._record_prices(prices, date)
         # record the initial positions of the portfolio
+        portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio, prices)
         self._record_positions(portfolio, date)
+
         return portfolio
+
 
     def update_ideal_weights(self, portfolio, delta):
         for key, value in portfolio.ideal_weights.items():
             portfolio.ideal_weights[key] = value + delta[key]
 
+
     def _record_prices(self, prices, date):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
-        # filter prices to only contain Price Open
-        prices = {k: v['Price Open'] for k, v in prices.items()}
-        self.hist_dict['historical_asset_prices'].append(({'timestamp': date,
-                                                           'prices': prices}))
+
+
+        if len(self.hist_dict['historical_asset_prices'])==0:
+            self.hist_dict['historical_asset_prices'].append(({'timestamp': date, 'prices': prices}))
+        elif date != self.hist_dict['historical_asset_prices'][-1]['timestamp']:
+            self.hist_dict['historical_asset_prices'].append(({'timestamp': date, 'prices': prices}))
+        else:
+            pass
+
 
     def _record_positions(self, portfolio, date):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
@@ -67,28 +82,28 @@ class Broker(ABC):
 
             self.hist_dict['benchmark']['timestamp'].append(date)
             self.hist_dict['benchmark']['positions'].append(portfolio.positions)
-            self.hist_dict['benchmark']['cash'] = portfolio.cash_position
+            self.hist_dict['benchmark']['cash'].append(portfolio.cash_position)
+            self.hist_dict['benchmark']['portfolio_weights'].append(portfolio.portfolio_weights)
+            self.hist_dict['benchmark']['portfolio_values'].append(portfolio.portfolio_values)
 
         else:
 
             self.hist_dict['rl']['timestamp'].append(date)
             self.hist_dict['rl']['positions'].append(portfolio.positions)
-            self.hist_dict['rl']['cash'] = portfolio.cash_position
+            self.hist_dict['rl']['cash'].append(portfolio.cash_position)
+            self.hist_dict['rl']['portfolio_weights'].append(portfolio.portfolio_weights)
+            self.hist_dict['rl']['portfolio_values'].append(portfolio.portfolio_values)
+
 
     def rebalance(self, date, prices, portfolio):  # TODO: rename function to rebalance_and_log
-        # check if portfolio is a list of portfolios and then iterate over them
-        if isinstance(portfolio, list):
-            for pf in portfolio:
-                self.rebalance_portfolio(date, prices, pf)
-        # if there is only one portfolio we just rebalance that one
-        else:
-            self.rebalance_portfolio(date, prices, portfolio)
+        # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
+        self.rebalance_portfolio(date, prices, portfolio)
         # record the prices for the specific period
         self._record_prices(prices, date)
 
-    def rebalance_portfolio(self, date, prices, portfolio: Portfolio):
-        # In the first step we want to take the ideal weights of the portfolio and adjust them
 
+    def rebalance_portfolio(self, date, prices, portfolio):
+        # In the first step we want to take the ideal weights of the portfolio and adjust them
         # check if the current date is equal to a rebalance date
         if portfolio.rebalancing_schedule.check_rebalance_date(self.start_date, date):
 
@@ -114,7 +129,7 @@ class Broker(ABC):
                 else:
                     outgoing_cash += transaction_dict['transaction_value']
 
-            while incoming_cash + portfolio.cash_position < outgoing_cash:
+            while incoming_cash + portfolio.cash_position < outgoing_cash:  # TODO: is the "+" correct?!
                 # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
                 for i, (asset, transaction) in enumerate(rebalance_dict.items()):
                     if incoming_cash + portfolio.cash_position < outgoing_cash and transaction['transaction_shares'] > 0:
@@ -131,17 +146,23 @@ class Broker(ABC):
             portfolio.cash_position += incoming_cash - outgoing_cash
 
             # TODO: If the cash position left is bigger than the price of some of the buys, we scale up the buys of the portfolio
+            #
             prices_buys = [price for i, (asset, price) in enumerate(prices.items()) if
                            rebalance_dict[asset]['transaction_shares'] > 0]
-            while portfolio.cash_position > min(prices_buys):
-                for i, (asset, transaction) in enumerate(rebalance_dict.items()):
-                    if portfolio.cash_position > prices[asset] and rebalance_dict[asset]['transaction_shares'] > 0:
-                        # We buy one more share of said asset
-                        portfolio.positions[asset] += 1
-                        portfolio.cash_position += -prices[asset]
+            if prices_buys != []:
+                while portfolio.cash_position > min(prices_buys):
+                    for i, (asset, transaction) in enumerate(rebalance_dict.items()):
+                        if portfolio.cash_position > prices[asset] and rebalance_dict[asset]['transaction_shares'] > 0:
+                            # We buy one more share of said asset
+                            portfolio.positions[asset] += 1
+                            portfolio.cash_position += -prices[asset]
 
             # Record the trades in the trade logs
+        else:
+            portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
+                                                                                                           prices)
         self._record_positions(portfolio, date)
+
 
     def get_trades_for_rebalance(self, portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
@@ -156,9 +177,13 @@ class Broker(ABC):
         rebalance_dict = {}
 
         for i, (asset, weight) in enumerate(portfolio_weights.items()):
-            transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset] )*portfolio_values['total_value']
-            rebalance_dict[asset] = {'transaction_shares': int(transaction_currency_value/prices[asset])}
-            rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares']*prices[asset]
+            if asset != 'total_value':
+                transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset]) * \
+                                             portfolio_values['total_value']
+                rebalance_dict[asset] = {
+                    'transaction_shares': int(transaction_currency_value / prices[asset].astype(float))}
+                rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares'] * prices[
+                    asset].astype(float)
 
         return rebalance_dict
 
@@ -169,19 +194,24 @@ class Broker(ABC):
         for i, (asset, position) in enumerate(portfolio.positions.items()):
             portfolio_values[asset] = position * prices[asset]
 
-        portfolio_values['total_value'] = sum(portfolio.values())
+        portfolio_values['total_value'] = sum(portfolio_values.values())
 
-        for i, (asset, position_value) in enumerate(portfolio_values):
-            portfolio_weights[asset] = portfolio_values[asset] / portfolio_values['total_value']
+
+        for i, (asset, position_value) in enumerate(portfolio_values.items()):
+            portfolio_weights[asset] = portfolio_values[asset]/portfolio_values['total_value']
 
         return portfolio_values, portfolio_weights
+
 
     def get_portfolio_value(self, portfolio, prices):
         portfolio_values = {}
         # only take "Price Open" to derive the portfolio value
-        prices = {k: v['Price Open'] for k, v in prices.items()}
         for i, (asset, position) in enumerate(portfolio.positions.items()):
             portfolio_values[asset] = position * prices[asset]
 
         portfolio_values['total_value'] = sum(portfolio_values.values())
+
         return portfolio_values['total_value']
+
+
+

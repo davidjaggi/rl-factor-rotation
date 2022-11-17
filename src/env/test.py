@@ -1,98 +1,117 @@
 #benchmark_portfolio.hist_dict['benchmark']['holdings'][-1]
+import pandas as pd
+import datetime
+import random
+import threading
+import time  # to simulate a real time data, time loop
+
+import numpy as np  # np mean, np random
+import plotly.express as px  # interactive charts
+import streamlit as st  # 🎈 data web app development
+from test2 import Update
+
+df = pd.DataFrame()
+
+base = datetime.datetime.today()
+days = 125
+hist_dict = {'benchmark': {'timestamp': [base - datetime.timedelta(days=x) for x in range(days)],
+                           'positions': {'asset1': random.sample(range(800, 1200), days),
+                                         'asset2': random.sample(range(500, 700), days),
+                                         'asset3': random.sample(range(200, 350), days)},
+                           'cash': random.sample(range(0, 10000), days)},
+                'rl': {'timestamp': [base - datetime.timedelta(days=x) for x in range(days)],
+                       'positions': {'asset1': random.sample(range(800, 1200), days),
+                                     'asset2': random.sample(range(500, 700), days),
+                                     'asset3': random.sample(range(200, 350), days)},
+                       'cash': random.sample(range(0, 10000), days)},
+             'historical_asset_prices': {'asset1': random.sample(range(200, 350), days),
+                                         'asset2': random.sample(range(400, 550), days),
+                                         'asset3': random.sample(range(600, 750), days)}}
 
 
-hist_dict = {'benchmark':
-                    {'timestamp': [], 'holdings': {'GOOGLE': [],'APPLE': []}, 'cash': []},
-                'rl': {'timestamp': [], 'holdings': {'GOOGLE': [],'APPLE': []}},
-                'historical_asset_prices': {'GOOGLE': [],'APPLE': []}}
+df_benchmark = pd.DataFrame()
+df_rl = pd.DataFrame()
+df_historical = pd.DataFrame()
+
+timestamp_benchmark = pd.DataFrame(hist_dict.get('benchmark').get('timestamp'))
+cash_benchmark = pd.DataFrame(hist_dict.get('benchmark').get('cash'))
+assets_benchmark = pd.DataFrame(hist_dict.get('benchmark').get('positions'))
+
+timestamp_rl = pd.DataFrame(hist_dict.get('rl').get('timestamp'))
+cash_rl = pd.DataFrame(hist_dict.get('rl').get('cash'))
+assets_rl = pd.DataFrame(hist_dict.get('rl').get('positions'))
+
+historical_prices = pd.DataFrame(hist_dict.get('historical_asset_prices'))
+
+df_benchmark['date'] = timestamp_benchmark
+for i in assets_benchmark.columns:
+    df_benchmark[i+'_bm'] = assets_benchmark[i]
+df_benchmark['cash_bm'] = cash_benchmark
+df_benchmark['date'] = pd.to_datetime(df_benchmark['date'])
 
 
-dt = '2020-02-24'
-date = '2020-02-25'
-holding1 = [1000]
-holding2 = [1000]
-prices1 = [500]
-prices2 = [1000]
-cash = [10000]
-hist_dict['benchmark']['cash'].append(cash[-1])
-trx_cost = 0
-hist_dict['benchmark']['timestamp'].append(dt)
-hist_dict['benchmark']['holdings']['GOOGLE'].append(holding1[-1])
-hist_dict['benchmark']['holdings']['APPLE'].append(holding2[-1])
-hist_dict['historical_asset_prices']['GOOGLE'].append(prices1[-1])
-hist_dict['historical_asset_prices']['APPLE'].append(prices2[-1])
-ideal_weights = [0.5, 0.5]
-delta = list()
-portfolio_value = {'GOOGLE': 1 ,'APPLE': 1}
+df_rl['date'] = timestamp_rl
+for i in assets_rl.columns:
+    df_rl[i+'_rl'] = assets_rl[i]
+df_rl['cash_rl'] = cash_rl
+df_rl['date'] = pd.to_datetime(df_rl['date'])
+
+
+for i in historical_prices.columns:
+    df_historical[i+'_hist'] = historical_prices[i]
+df_historical['date'] = pd.to_datetime(df_benchmark['date'])
+
+
+together = df_benchmark.merge(df_rl, on='date', how='left')
+together = together.merge(df_historical, on='date', how='left')
 
 
 
-pricelist = [[1000,1000], [1100,1050], [900,1050], [950,900], [850,1200]]
+df = together
 
-for i in pricelist:
-    hist_dict['historical_asset_prices']['GOOGLE'].append(i[0])
-    hist_dict['historical_asset_prices']['APPLE'].append(i[1])
-    portfolio_value['GOOGLE'] = hist_dict['benchmark']['holdings']['GOOGLE'][-1]*hist_dict['historical_asset_prices']['GOOGLE'][-1]
-    portfolio_value['APPLE'] = hist_dict['benchmark']['holdings']['APPLE'][-1]*hist_dict['historical_asset_prices']['APPLE'][-1]
+df3 = Update(df)
+test = df3.func1().df2
 
 
-    ratio = (portfolio_value['GOOGLE']) / (portfolio_value['GOOGLE'] + portfolio_value['APPLE'])
+
+'''
+
+def func2():
+    while True:
+
+        st.set_page_config(
+            page_title="Real-Time RL Dashboard",
+            page_icon="✅",
+            layout="wide",
+        )
+        # dashboard title
+        st.title("Real-Time RL Dashboard")
+
+        # top-level filters
+        #day_filter = st.selectbox("Select the day", df["asset_bm"]))
+
+        # dataframe filter
+
+        df2 = df2.set_index('date')
+        df_bm = df2[['asset1_bm','asset2_bm','asset3_bm']].copy()
+        df_rl = df2[['asset1_rl','asset2_rl','asset3_rl']].copy()
+        df_hist = df2[['asset1_hist','asset2_hist','asset3_hist']].copy()
 
 
-    curr_weight = [ratio, 1 - ratio]
-    ideal_weights = [0.5, 0.5]
-    delta = list()
 
-    for a, b in zip(curr_weight, ideal_weights):
-        delta.append((a*-1) - (b*-1))
+        res_bm = df_bm.div(df_bm.sum(axis=1), axis=0)
+        res_rl = df_rl.div(df_rl.sum(axis=1), axis=0)
 
-    delta_portfolio_value = portfolio_value['GOOGLE'] - portfolio_value['APPLE']
+        st.header('Benchmark holdings')
+        st.area_chart(res_bm)
+        st.header('RL Agent holdings')
+        st.area_chart(res_rl)
+        st.header('Historical asset prices')
+        st.line_chart(df_hist)
 
-    if delta_portfolio_value > 0:
-        nr_shares_g = delta_portfolio_value / 2 / hist_dict['historical_asset_prices']['GOOGLE'][-1]
-        nr_shares_a = delta_portfolio_value / 2 / hist_dict['historical_asset_prices']['APPLE'][-1]*-1
-    else:
-        nr_shares_g = delta_portfolio_value / 2 / hist_dict['historical_asset_prices']['GOOGLE'][-1]*-1
-        nr_shares_a = delta_portfolio_value / 2 / hist_dict['historical_asset_prices']['APPLE'][-1]
-
-
-    shares_to_trade = [round(nr_shares_g, 0), round(nr_shares_a, 0)]
-
-    # TODO: implement the ENV_CONFIG = initial_balance within this function to check if we have enough money to trade (cash within hist_dict)
-
-
-    cash_google = shares_to_trade[0] * hist_dict['historical_asset_prices']['GOOGLE'][-1]
-    cash_apple = shares_to_trade[1] * hist_dict['historical_asset_prices']['APPLE'][-1]
-
-    if cash_google > 0:
-        if cash_apple*-1+hist_dict['benchmark']['cash'][-1]>cash_google:
-            pass
-        else:
-            nr_shares_g = nr_shares_g - (cash_google + cash_apple - hist_dict['benchmark']['cash'][-1])/hist_dict['historical_asset_prices']['GOOGLE'][-1]
-            shares_to_trade = [round(nr_shares_g, 0), round(nr_shares_a, 0)]
-            cash_google = shares_to_trade[0] * hist_dict['historical_asset_prices']['GOOGLE'][-1]
-
-    else:
-        if cash_google*-1+hist_dict['benchmark']['cash'][-1]>cash_apple:
-            pass
-        else:
-            nr_shares_a = nr_shares_a - (cash_apple + cash_google - hist_dict['benchmark']['cash'][-1])/hist_dict['historical_asset_prices']['APPLE'][-1]
-            shares_to_trade = [round(nr_shares_g, 0), round(nr_shares_a, 0)]
-            cash_apple = shares_to_trade[1] * hist_dict['historical_asset_prices']['APPLE'][-1]
-
-
-    cash_delta = cash_google + cash_apple
-
-
-    hist_dict['benchmark']['cash'].append(hist_dict['benchmark']['cash'][-1] - cash_delta -
-                                               trx_cost * (abs(shares_to_trade[0]) + abs(shares_to_trade[1])))
-
-
-    hist_dict['benchmark']['timestamp'].append(date)
-
-
-    new_holdings_g = hist_dict['benchmark']['holdings']['GOOGLE'][-1] + shares_to_trade[0]
-    new_holdings_a = hist_dict['benchmark']['holdings']['APPLE'][-1] + shares_to_trade[1]
-
-    hist_dict['benchmark']['holdings']['GOOGLE'].append(new_holdings_g)
-    hist_dict['benchmark']['holdings']['APPLE'].append(new_holdings_a)
+if __name__ == '__main__':
+    t1 = threading.Thread(target=func1, args=())
+    t2 = threading.Thread(target=func2, args=())
+    t1.start()
+    t2.start()
+'''

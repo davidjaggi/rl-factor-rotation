@@ -53,18 +53,18 @@ class Portfolio(ABC):
         if self.rebalancing_type == "equally_weighted":
             # TODO: fix the equally weighted case
             for i, (asset, price) in enumerate(prices.items()):
-                positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])
+                positions[asset] = int((self.initial_balance / number_of_assets) / price)
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
-                    self.cash_position += -positions[asset] * price['Price Open']
+                    self.cash_position += -positions[asset] * price
 
 
         else:
             for i, (asset, price) in enumerate(prices.items()):
-                positions[asset] = int((self.initial_balance / number_of_assets) / price['Price Open'])
+                positions[asset] = int((self.initial_balance / number_of_assets) / price)
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
-                    self.cash_position += -positions[asset] * price['Price Open']
+                    self.cash_position += -positions[asset] * price
         return positions
 
 
