@@ -150,7 +150,7 @@ class CSVDataFeed(Feed):
         # And update the dt to the next prices snapshot
         dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(date)
         self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
-
+        prices = {k: v['Price Open'] for k, v in prices.items()}
         return prices
 
     def get_dates(self):

@@ -1,7 +1,5 @@
 from abc import ABC
 
-from src.env.portfolio import Portfolio
-
 
 class Broker(ABC):
     """ Broker class
@@ -67,8 +65,7 @@ class Broker(ABC):
 
     def _record_prices(self, prices, date):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
-        # filter prices to only contain Price Open
-        prices = {k: v['Price Open'] for k, v in prices.items()}
+
 
         if len(self.hist_dict['historical_asset_prices'])==0:
             self.hist_dict['historical_asset_prices'].append(({'timestamp': date, 'prices': prices}))
@@ -106,7 +103,6 @@ class Broker(ABC):
 
     def rebalance_portfolio(self, date, prices, portfolio):
         # In the first step we want to take the ideal weights of the portfolio and adjust them
-
         # check if the current date is equal to a rebalance date
         if portfolio.rebalancing_schedule.check_rebalance_date(self.start_date, date):
 
@@ -149,7 +145,7 @@ class Broker(ABC):
             portfolio.cash_position += incoming_cash - outgoing_cash
 
             # TODO: If the cash position left is bigger than the price of some of the buys, we scale up the buys of the portfolio
-            prices = {k: v['Price Open'] for k, v in prices.items()}
+            #
             prices_buys = [price for i, (asset, price) in enumerate(prices.items()) if
                            rebalance_dict[asset]['transaction_shares'] > 0]
             if prices_buys != []:
@@ -179,9 +175,12 @@ class Broker(ABC):
 
         for i, (asset, weight) in enumerate(portfolio_weights.items()):
             if asset != 'total_value':
-                transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset] ) * portfolio_values['total_value']
-                rebalance_dict[asset] = {'transaction_shares': int(transaction_currency_value/prices[asset]['Price Close'].astype(float))}
-                rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares']*prices[asset]['Price Close'].astype(float)
+                transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset]) * \
+                                             portfolio_values['total_value']
+                rebalance_dict[asset] = {
+                    'transaction_shares': int(transaction_currency_value / prices[asset].astype(float))}
+                rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares'] * prices[
+                    asset].astype(float)
 
         return rebalance_dict
 
@@ -189,7 +188,6 @@ class Broker(ABC):
     def get_portfolio_value_and_weights(self, portfolio, prices):
         portfolio_values = {}
         portfolio_weights = {}
-        prices = {k: v['Price Open'] for k, v in prices.items()}
         for i, (asset, position) in enumerate(portfolio.positions.items()):
             portfolio_values[asset] = position * prices[asset]
 
@@ -205,7 +203,6 @@ class Broker(ABC):
     def get_portfolio_value(self, portfolio, prices):
         portfolio_values = {}
         # only take "Price Open" to derive the portfolio value
-        prices = {k: v['Price Open'] for k, v in prices.items()}
         for i, (asset, position) in enumerate(portfolio.positions.items()):
             portfolio_values[asset] = position * prices[asset]
 
