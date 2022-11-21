@@ -1,6 +1,5 @@
 from abc import ABC
 
-
 class Portfolio(ABC):
     """ Parent class for all portfolios.
     config keys:
@@ -65,6 +64,7 @@ class Portfolio(ABC):
                 # Check if we have enough initial balance to initiate the position
                 if positions[asset] > 0:
                     self.cash_position += -positions[asset] * price
+
         return positions
 
 

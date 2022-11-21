@@ -1,3 +1,4 @@
+import copy
 from abc import ABC
 
 
@@ -37,6 +38,7 @@ class Broker(ABC):
             self.hist_dict['benchmark']['positions'] = []
             self.hist_dict['benchmark']['portfolio_values'] = []
             self.hist_dict['benchmark']['portfolio_weights'] = []
+            self.hist_dict['benchmark']['ideal_weights'] = []
             self.trade_logs['benchmark'] = []
 
         else:
@@ -45,6 +47,7 @@ class Broker(ABC):
             self.hist_dict['rl']['positions'] = []
             self.hist_dict['rl']['portfolio_values'] = []
             self.hist_dict['rl']['portfolio_weights'] = []
+            self.hist_dict['rl']['ideal_weights'] = []
             self.trade_logs['rl'] = []
 
         # reset the historical asset prices
@@ -67,11 +70,10 @@ class Broker(ABC):
     def _record_prices(self, prices, date):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
 
-
         if len(self.hist_dict['historical_asset_prices'])==0:
-            self.hist_dict['historical_asset_prices'].append(({'timestamp': date, 'prices': prices}))
+            self.hist_dict['historical_asset_prices'].append(copy.deepcopy({'timestamp': date, 'prices': prices}))
         elif date != self.hist_dict['historical_asset_prices'][-1]['timestamp']:
-            self.hist_dict['historical_asset_prices'].append(({'timestamp': date, 'prices': prices}))
+            self.hist_dict['historical_asset_prices'].append(copy.deepcopy({'timestamp': date, 'prices': prices}))
         else:
             pass
 
@@ -80,19 +82,21 @@ class Broker(ABC):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
         if type(portfolio).__name__ != 'RLPortfolio':
 
-            self.hist_dict['benchmark']['timestamp'].append(date)
-            self.hist_dict['benchmark']['positions'].append(portfolio.positions)
-            self.hist_dict['benchmark']['cash'].append(portfolio.cash_position)
-            self.hist_dict['benchmark']['portfolio_weights'].append(portfolio.portfolio_weights)
-            self.hist_dict['benchmark']['portfolio_values'].append(portfolio.portfolio_values)
+            self.hist_dict['benchmark']['timestamp'].append(copy.deepcopy(date))
+            self.hist_dict['benchmark']['positions'].append(copy.deepcopy(portfolio.positions))
+            self.hist_dict['benchmark']['cash'].append(copy.deepcopy(portfolio.cash_position))
+            self.hist_dict['benchmark']['portfolio_weights'].append(copy.deepcopy(portfolio.portfolio_weights))
+            self.hist_dict['benchmark']['portfolio_values'].append(copy.deepcopy(portfolio.portfolio_values))
+            self.hist_dict['benchmark']['ideal_weights'].append(copy.deepcopy(portfolio.ideal_weights))
 
         else:
 
-            self.hist_dict['rl']['timestamp'].append(date)
-            self.hist_dict['rl']['positions'].append(portfolio.positions)
-            self.hist_dict['rl']['cash'].append(portfolio.cash_position)
-            self.hist_dict['rl']['portfolio_weights'].append(portfolio.portfolio_weights)
-            self.hist_dict['rl']['portfolio_values'].append(portfolio.portfolio_values)
+            self.hist_dict['rl']['timestamp'].append(copy.deepcopy(date))
+            self.hist_dict['rl']['positions'].append(copy.deepcopy(portfolio.positions))
+            self.hist_dict['rl']['cash'].append(copy.deepcopy(portfolio.cash_position))
+            self.hist_dict['rl']['portfolio_weights'].append(copy.deepcopy(portfolio.portfolio_weights))
+            self.hist_dict['rl']['portfolio_values'].append(copy.deepcopy(portfolio.portfolio_values))
+            self.hist_dict['rl']['ideal_weights'].append(copy.deepcopy(portfolio.ideal_weights))
 
 
     def rebalance(self, date, prices, portfolio):  # TODO: rename function to rebalance_and_log
@@ -129,16 +133,19 @@ class Broker(ABC):
                 else:
                     outgoing_cash += transaction_dict['transaction_value']
 
-            while incoming_cash + portfolio.cash_position < outgoing_cash:  # TODO: is the "+" correct?!
+            while incoming_cash + portfolio.cash_position < outgoing_cash:
                 # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
                 for i, (asset, transaction) in enumerate(rebalance_dict.items()):
-                    if incoming_cash + portfolio.cash_position < outgoing_cash and transaction['transaction_shares'] > 0:
+                    if incoming_cash + portfolio.cash_position < outgoing_cash and transaction[
+                        'transaction_shares'] > 0:
                         # We need to scale down this purchase
                         available_capital = incoming_cash + portfolio.cash_position
-                        rebalance_dict[asset]['transaction_shares'] += -int((outgoing_cash - (available_capital))/prices[asset]) - 1 #
+                        rebalance_dict[asset]['transaction_shares'] += -int(
+                            (outgoing_cash - (available_capital)) / prices[asset]) - 1  #
                         # Update the outgoing cash
-                        outgoing_cash += (-int((outgoing_cash - (available_capital))/prices[asset]) - 1)*prices[asset]
-                        #TODO: Currently this only scales down the first "buy" transaction it finds in the dictionary, if we are buying more than one asset we would have to implement a "scale down method" (for example buy 1 share less iteratively from all buys until we have enough capital)
+                        outgoing_cash += (-int((outgoing_cash - (available_capital)) / prices[asset]) - 1) * prices[
+                            asset]
+                        # TODO: Currently this only scales down the first "buy" transaction it finds in the dictionary, if we are buying more than one asset we would have to implement a "scale down method" (for example buy 1 share less iteratively from all buys until we have enough capital)
             # We now have enough capital to carry out the rebalance so we carry out the trades and update our cash and positions
             for i, (asset, transaction) in enumerate(rebalance_dict.items()):
                 portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
@@ -210,6 +217,7 @@ class Broker(ABC):
             portfolio_values[asset] = position * prices[asset]
 
         portfolio_values['total_value'] = sum(portfolio_values.values())
+        portfolio_values["total_value"] = portfolio_values["total_value"] + portfolio.cash_position
 
         return portfolio_values['total_value']
 

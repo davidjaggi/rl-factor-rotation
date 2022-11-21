@@ -33,7 +33,7 @@ class Analyzer(ABC):
 
         for i in hist_dict['historical_asset_prices']:
             prices = pd.DataFrame(i.get('prices'), index=[i.get('timestamp')])
-            historical_prices = historical_prices.append(prices, ignore_index=False)
+            historical_prices = pd.concat([historical_prices, prices], axis=0)
 
         list1 = list(positions_benchmark.columns)
         list1.append('total_value')

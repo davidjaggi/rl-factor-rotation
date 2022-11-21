@@ -9,8 +9,6 @@ from src.env.base_env import BaseEnv
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.utils.load_path import load_data_path
 
-# from src.env.plotting import pltt
-
 DATA_PATH = load_data_path()
 # %%
 

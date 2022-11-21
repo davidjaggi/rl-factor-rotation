@@ -1,15 +1,12 @@
 # %%
-import sys
-
-# setting path
-sys.path.append('/Users/kiafarokhnia/PycharmProjects/rl-factor-rotation/')
-
+import os
 from datetime import date
-import streamlit as st  # 🎈 data web app development
 
-from src.server.runner import ret
-from src.env.dataframe import splitting
+import streamlit as st
+
 from src.analyzer.analyzer import Analyzer
+from src.env.dataframe import splitting
+from src.server.runner import ret
 
 
 def run():
@@ -69,5 +66,8 @@ def run():
         st.header('Historical asset prices')
         st.line_chart(df_hist)
 
+
 if __name__ == '__main__':
-    run()
+    # shell comand
+    # streamlit run src/server/app.py
+    os.system('streamlit run app.py')

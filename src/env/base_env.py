@@ -8,6 +8,8 @@ from gym.utils import seeding
 
 from src.env.broker import Broker
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
+
+
 #from src.env.plotting import Plot
 
 
@@ -55,7 +57,9 @@ class BaseEnv(gym.Env, ABC):
 
         # reset the portfolios
         self.broker.reset(self.rl_portfolio, self.day)
+        self.broker._record_positions(self.rl_portfolio, self.date)
         self.broker.reset(self.benchmark_portfolio, self.day)
+        self.broker._record_positions(self.benchmark_portfolio, self.date)
         # initialize state
         self.state = self.build_observation()
         # add one day
@@ -196,8 +200,6 @@ class BaseEnv(gym.Env, ABC):
 
     def reward_func(self, prices):
         """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""
-        # TODO: implement correct reward function
-        reward = 100
         rl_value = self.broker.get_portfolio_value(self.rl_portfolio, prices)
         bm_value = self.broker.get_portfolio_value(self.benchmark_portfolio, prices)
         reward = rl_value - bm_value
