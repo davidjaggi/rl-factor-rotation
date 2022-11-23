@@ -72,7 +72,7 @@ class Broker(ABC):
                 updated_ideal_weights = round(value/sum(list(portfolio.ideal_weights.values())), 2)
 
         # Check for feasibility ( all weights must be 0 > w > 1
-        if all([weight > 0 and weight < 1 for weight in list(updated_ideal_weights.values())]):
+        if all([weight >= 0 and weight <= 1 for weight in list(updated_ideal_weights.values())]):
             portfolio.ideal_weights = updated_ideal_weights
 
 
