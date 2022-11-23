@@ -63,8 +63,19 @@ class Broker(ABC):
 
 
     def update_ideal_weights(self, portfolio, delta):
+        updated_ideal_weights = {}
         for key, value in portfolio.ideal_weights.items():
-            portfolio.ideal_weights[key] = value + delta[key]
+            updated_ideal_weights[key] = round(value + delta[key],2)
+        # Check for rounding errors
+        if round(sum(list(updated_ideal_weights.values())),2) != 1:
+            for key, value in updated_ideal_weights.items():
+                updated_ideal_weights = round(value/sum(list(portfolio.ideal_weights.values())), 2)
+
+        # Check for feasibility ( all weights must be 0 > w > 1
+        if all([weight > 0 and weight < 1 for weight in list(updated_ideal_weights.values())]):
+            portfolio.ideal_weights = updated_ideal_weights
+
+
 
 
     def _record_prices(self, prices, date):
@@ -198,14 +209,18 @@ class Broker(ABC):
     def get_portfolio_value_and_weights(self, portfolio, prices):
         portfolio_values = {}
         portfolio_weights = {}
+        portfolio_total_value = 0
         for i, (asset, position) in enumerate(portfolio.positions.items()):
             portfolio_values[asset] = position * prices[asset]
+            portfolio_total_value += portfolio_values[asset]
 
-        portfolio_values['total_value'] = sum(portfolio_values.values())
-
+        portfolio_total_value += portfolio.cash_position
+        portfolio_values['total_value'] = portfolio_total_value
 
         for i, (asset, position_value) in enumerate(portfolio_values.items()):
             portfolio_weights[asset] = portfolio_values[asset]/portfolio_values['total_value']
+
+        portfolio_values['cash'] = portfolio.cash_position
 
         return portfolio_values, portfolio_weights
 
@@ -216,8 +231,7 @@ class Broker(ABC):
         for i, (asset, position) in enumerate(portfolio.positions.items()):
             portfolio_values[asset] = position * prices[asset]
 
-        portfolio_values['total_value'] = sum(portfolio_values.values())
-        portfolio_values["total_value"] = portfolio_values["total_value"] + portfolio.cash_position
+        portfolio_values['total_value'] = sum(portfolio_values.values()) + portfolio.cash_position
 
         return portfolio_values['total_value']
 
