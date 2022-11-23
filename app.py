@@ -1,11 +1,9 @@
 # %%
-import os
 from datetime import date
 
 import streamlit as st
 
 from src.analyzer.analyzer import Analyzer
-from src.env.dataframe import splitting
 from src.server.runner import ret
 
 
@@ -42,32 +40,27 @@ def run():
             key='download-csv'
         )
 
-        df, df_bm, df_rl, df_hist, df_cash, df_value, df_position_bm, \
-        df_position_rl, df_weight_bm, df_weight_rl = splitting(df)
-
         st.header('Benchmark holdings')
-        st.line_chart(df_position_bm)
+        st.line_chart(analyzer.get_positions("benchmark"))
 
         st.header('RL Agent holdings')
-        st.line_chart(df_position_rl)
+        st.line_chart(analyzer.get_positions("rl"))
 
         st.header('Benchmark weights')
-        st.area_chart(df_weight_bm)
+        st.area_chart(analyzer.get_weights("benchmark"))
 
         st.header('RL weights')
-        st.area_chart(df_weight_rl)
+        st.area_chart(analyzer.get_weights("rl"))
 
         st.header('Portfolio value')
-        st.line_chart(df_value)
+        st.line_chart(analyzer.get_values("benchmark"))
 
         st.header('Cash positions')
-        st.line_chart(df_cash)
+        st.line_chart(analyzer.get_cash("benchmark"))
+        st.line_chart(analyzer.get_cash("rl"))
 
         st.header('Historical asset prices')
-        st.line_chart(df_hist)
-
+        st.line_chart(analyzer.get_prices())
 
 if __name__ == '__main__':
-    # shell comand
-    # streamlit run src/server/app.py
-    os.system('streamlit run app.py')
+    run()
