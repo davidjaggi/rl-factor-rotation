@@ -57,9 +57,9 @@ class BaseEnv(gym.Env, ABC):
 
         # reset the portfolios
         self.broker.reset(self.rl_portfolio, self.day)
-        self.broker._record_positions(self.rl_portfolio, self.date)
+        # self.broker._record_positions(self.rl_portfolio, self.date) # Unnecessary, see line 60 of broker.py
         self.broker.reset(self.benchmark_portfolio, self.day)
-        self.broker._record_positions(self.benchmark_portfolio, self.date)
+        # self.broker._record_positions(self.benchmark_portfolio, self.date) # Unnecessary, see line 60 of broker.py
         # initialize state
         self.state = self.build_observation()
         # add one day
@@ -116,8 +116,9 @@ class BaseEnv(gym.Env, ABC):
         if actions == 0:
             delta = {asset: 0 for asset in portfolio.investment_universe}
         else:
-            delta = {asset: -0.05 / (n_assets - 1) for asset in portfolio.investment_universe}
+            delta = {asset: round(-0.05 / (n_assets - 1),2) for asset in portfolio.investment_universe}
             delta[portfolio.investment_universe[actions - 1]] = 0.05
+
         return delta
 
     def _seed(self, seed=None):

@@ -64,7 +64,11 @@ class Broker(ABC):
 
     def update_ideal_weights(self, portfolio, delta):
         for key, value in portfolio.ideal_weights.items():
-            portfolio.ideal_weights[key] = value + delta[key]
+            portfolio.ideal_weights[key] = round(value + delta[key],2)
+        # Check for rounding errors
+        if round(sum(list(portfolio.ideal_weights.values())),2) != 1:
+            for key, value in portfolio.ideal_weights.items():
+                portfolio.ideal_weights[key] = round(value/sum(list(portfolio.ideal_weights.values())), 2)
 
 
     def _record_prices(self, prices, date):
