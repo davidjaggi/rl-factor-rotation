@@ -201,7 +201,20 @@ class BaseEnv(gym.Env, ABC):
 
     def reward_func(self, prices):
         """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""
+        if len(self.broker.hist_dict["benchmark"]["portfolio_values"]) > 0 and len(
+                self.broker.hist_dict["rl"]["portfolio_values"]) > 0:
+            last_rl_value = self.broker.hist_dict["rl"]["portfolio_values"][-1]["total_value"]
+            last_bm_value = self.broker.hist_dict["benchmark"]["portfolio_values"][-1]["total_value"]
+        else:
+            last_rl_value = 0.0
+            last_bm_value = 0.0
+
         rl_value = self.broker.get_portfolio_value(self.rl_portfolio, prices)
         bm_value = self.broker.get_portfolio_value(self.benchmark_portfolio, prices)
-        reward = rl_value - bm_value
+
+        if last_bm_value == 0.0:
+            reward = 0.0
+        else:
+            reward = (rl_value - bm_value) / (last_bm_value)
+
         return reward
