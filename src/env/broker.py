@@ -93,6 +93,7 @@ class Broker(ABC):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
         if type(portfolio).__name__ != 'RLPortfolio':
 
+
             self.hist_dict['benchmark']['timestamp'].append(copy.deepcopy(date))
             self.hist_dict['benchmark']['positions'].append(copy.deepcopy(portfolio.positions))
             self.hist_dict['benchmark']['cash'].append(copy.deepcopy(portfolio.cash_position))
@@ -101,7 +102,8 @@ class Broker(ABC):
             self.hist_dict['benchmark']['ideal_weights'].append(copy.deepcopy(portfolio.ideal_weights))
 
         else:
-
+            if len(self.hist_dict['rl']['timestamp']) == 13:
+                print('hello')
             self.hist_dict['rl']['timestamp'].append(copy.deepcopy(date))
             self.hist_dict['rl']['positions'].append(copy.deepcopy(portfolio.positions))
             self.hist_dict['rl']['cash'].append(copy.deepcopy(portfolio.cash_position))
@@ -174,7 +176,7 @@ class Broker(ABC):
                             # We buy one more share of said asset
                             portfolio.positions[asset] += 1
                             portfolio.cash_position += -prices[asset]
-
+            portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio, prices)
             # Record the trades in the trade logs
         else:
             portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
@@ -207,6 +209,9 @@ class Broker(ABC):
 
 
     def get_portfolio_value_and_weights(self, portfolio, prices):
+        if len(self.hist_dict['rl']['timestamp']) == 13:
+            if type(portfolio).__name__ == 'RLPortfolio':
+                print('hello')
         portfolio_values = {}
         portfolio_weights = {}
         portfolio_total_value = 0

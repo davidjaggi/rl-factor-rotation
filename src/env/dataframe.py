@@ -20,8 +20,8 @@ def consolidation(hist_dict):
     timestamp_rl = pd.DataFrame(hist_dict.get('rl').get('timestamp'))
     cash_rl = pd.DataFrame(hist_dict.get('rl').get('cash'))
     positions_rl = pd.DataFrame(hist_dict.get('rl').get('positions'))
-    portfolio_values_rl = pd.DataFrame(hist_dict.get('benchmark').get('portfolio_values'))
-    portfolio_weights_rl = pd.DataFrame(hist_dict.get('benchmark').get('portfolio_weights'))
+    portfolio_values_rl = pd.DataFrame(hist_dict.get('rl').get('portfolio_values'))
+    portfolio_weights_rl = pd.DataFrame(hist_dict.get('rl').get('portfolio_weights'))
 
     historical_prices = pd.DataFrame()
     col_assets = list(hist_dict['historical_asset_prices'][0]['prices'].keys())
@@ -129,52 +129,89 @@ def splitting(df):
     return df, df_bm, df_rl, df_hist, df_cash, df_value, df_position_bm, df_position_rl, df_weight_bm, df_weight_rl
 
 
+def compare(df):
+    df = df.reset_index()
 
-'''
-class Con_DataFrame(ABC):
+    weight_google_bm = []
+    weight_apple_bm = []
 
-    def __init__(self, hist_dict):
-        self.hist_dict = hist_dict
+    weight_google_rl = []
+    weight_apple_rl = []
 
-    def consolidation(self):
-        df_benchmark = pd.DataFrame()
-        df_rl = pd.DataFrame()
-        df_historical = pd.DataFrame()
+    tot_val_port_bm = []
+    tot_val_port_rl = []
 
-        timestamp_benchmark = pd.DataFrame(self.hist_dict.get('benchmark').get('timestamp'))
-        cash_benchmark = pd.DataFrame(self.hist_dict.get('benchmark').get('cash'))
-        assets_benchmark = pd.DataFrame(self.hist_dict.get('benchmark').get('positions'))
+    diff_weight_google_bm = []
+    diff_weight_apple_bm = []
 
-        timestamp_rl = pd.DataFrame(self.hist_dict.get('rl').get('timestamp'))
-        cash_rl = pd.DataFrame(self.hist_dict.get('rl').get('cash'))
-        assets_rl = pd.DataFrame(self.hist_dict.get('rl').get('positions'))
+    diff_weight_google_rl = []
+    diff_weight_apple_rl = []
 
-        historical_prices = pd.DataFrame(self.hist_dict.get('historical_asset_prices'))
+    diff_port_val_bm = []
+    diff_port_val_rl = []
 
-        df_benchmark['date'] = timestamp_benchmark
-        for i in assets_benchmark.columns:
-            df_benchmark[i+'_bm'] = assets_benchmark[i]
-        df_benchmark['cash_bm'] = cash_benchmark
-        df_benchmark['date'] = pd.to_datetime(df_benchmark['date'])
+    for step in range(len(df['GOOGL.O_position_bm'])):
+        google_pos_bm = df['GOOGL.O_position_bm'].iloc[step]
+        apple_pos_bm = df['AAPL.O_position_bm'].iloc[step]
 
+        google_pos_rl = df['GOOGL.O_position_rl'].iloc[step]
+        apple_pos_rl = df['AAPL.O_position_rl'].iloc[step]
 
-        df_rl['date'] = timestamp_rl
-        for i in assets_rl.columns:
-            df_rl[i+'_rl'] = assets_rl[i]
-        df_rl['cash_rl'] = cash_rl
-        df_rl['date'] = pd.to_datetime(df_rl['date'])
+        google_hist = df['GOOGL.O_price_hist'].iloc[step]
+        apple_hist = df['AAPL.O_price_hist'].iloc[step]
 
+        cash_bm = df['cash_bm'].iloc[step]
+        cash_rl = df['cash_rl'].iloc[step]
 
-        for i in historical_prices.columns:
-            df_historical[i+'_hist'] = historical_prices[i]
-        df_historical['date'] = pd.to_datetime(df_benchmark['date'])
+        google_weight_bm = df['GOOGL.O_weight_bm'].iloc[step]
+        apple_weight_bm = df['AAPL.O_weight_bm'].iloc[step]
 
+        google_weight_rl = df['GOOGL.O_weight_rl'].iloc[step]
+        apple_weight_rl = df['AAPL.O_weight_rl'].iloc[step]
 
-        self.consolidated = df_benchmark.merge(df_rl, on='date', how='left')
-        self.consolidated = self.together.merge(df_historical, on='date', how='left')
+        google_portfolio_bm = df['GOOGL.O_portfolio_bm'].iloc[step]
+        apple_portfolio_bm = df['AAPL.O_portfolio_bm'].iloc[step]
 
-        return self.consolidated
+        google_portfolio_rl = df['GOOGL.O_portfolio_rl'].iloc[step]
+        apple_portfolio_rl = df['AAPL.O_portfolio_rl'].iloc[step]
 
-    def last_entry(self):
-        return self.consolidated[-1]
-'''
+        total_value_portfolio_bm = df['total_value_portfolio_bm'].iloc[step]
+        total_value_portfolio_rl = df['total_value_portfolio_rl'].iloc[step]
+
+        weight_google_bm.append(
+            (google_pos_bm * google_hist) / (google_pos_bm * google_hist + apple_pos_bm * apple_hist + cash_bm))
+        weight_apple_bm.append(
+            (apple_pos_bm * apple_hist) / (google_pos_bm * google_hist + apple_pos_bm * apple_hist + cash_bm))
+
+        weight_google_rl.append(
+            (google_pos_rl * google_hist) / (google_pos_rl * google_hist + apple_pos_rl * apple_hist + cash_rl))
+        weight_apple_rl.append(
+            (apple_pos_rl * apple_hist) / (google_pos_rl * google_hist + apple_pos_rl * apple_hist + cash_rl))
+
+        tot_val_port_bm.append(google_pos_bm * google_hist + apple_pos_bm * apple_hist + cash_bm)
+        tot_val_port_rl.append(google_pos_rl * google_hist + apple_pos_rl * apple_hist + cash_rl)
+
+        diff_weight_google_bm.append((weight_google_bm[step] - google_weight_bm) / google_weight_bm * 100)
+        diff_weight_apple_bm.append((weight_apple_bm[step] - apple_weight_bm) / apple_weight_bm * 100)
+
+        diff_weight_google_rl.append((weight_google_rl[step] - google_weight_rl) / google_weight_rl * 100)
+        diff_weight_apple_rl.append((weight_apple_rl[step] - apple_weight_rl) / apple_weight_rl * 100)
+
+        diff_port_val_bm.append((tot_val_port_bm[step] - total_value_portfolio_bm) / total_value_portfolio_bm * 100)
+        diff_port_val_rl.append((tot_val_port_rl[step] - total_value_portfolio_rl) / total_value_portfolio_rl * 100)
+
+    data_tuples = list(
+        zip(df['date'], weight_google_bm, weight_apple_bm, weight_google_rl, weight_apple_rl, tot_val_port_bm,
+            tot_val_port_rl, diff_weight_google_bm, diff_weight_apple_bm, diff_weight_google_rl,
+            diff_weight_apple_rl, diff_port_val_bm, diff_port_val_rl))
+
+    df_comparison = pd.DataFrame(data_tuples, columns=['date', 'weight_google_bm', 'weight_apple_bm', 'weight_google_rl',
+                                             'weight_apple_rl',
+                                             'tot_val_port_bm', 'tot_val_port_rl', 'diff_weight_google_bm',
+                                             'diff_weight_apple_bm', 'diff_weight_google_rl',
+                                             'diff_weight_apple_rl',
+                                             'diff_port_val_bm', 'diff_port_val_rl'])
+
+    df_comparison = df_comparison.set_index('date')
+
+    return df_comparison

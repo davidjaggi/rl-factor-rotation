@@ -5,7 +5,9 @@ from datetime import date
 import streamlit as st
 
 from src.analyzer.analyzer import Analyzer
+from src.env.dataframe import consolidation
 from src.env.dataframe import splitting
+from src.env.dataframe import compare
 from src.server.runner import ret
 
 
@@ -33,6 +35,7 @@ def run():
             return df.to_csv(index=True).encode('utf-8')
 
         csv = convert_df(df)
+        df.to_csv('/Users/kiafarokhnia/Downloads/file1.csv')
         # allow to download data from stramlit
         st.download_button(
             "Press to Download",
@@ -66,8 +69,19 @@ def run():
         st.header('Historical asset prices')
         st.line_chart(df_hist)
 
+        df_comparison = compare(df)
 
+        st.line_chart(df_comparison[['diff_weight_google_bm', 'diff_weight_apple_bm', 'diff_weight_google_rl',
+                                     'diff_weight_apple_rl', 'diff_port_val_bm', 'diff_port_val_rl']])
+        csv2 = convert_df(df_comparison)
+        df_comparison.to_csv('/Users/kiafarokhnia/Downloads/file2.csv')
+        # allow to download data from stramlit
+        st.download_button(
+            "Press to Download",
+            csv2,
+            "file.csv",
+            "text/csv",
+            key='download-csv2'
+        )
 if __name__ == '__main__':
-    # shell comand
-    # streamlit run src/server/app.py
-    os.system('streamlit run app.py')
+    run()
