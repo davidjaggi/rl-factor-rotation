@@ -102,8 +102,7 @@ class Broker(ABC):
             self.hist_dict['benchmark']['ideal_weights'].append(copy.deepcopy(portfolio.ideal_weights))
 
         else:
-            if len(self.hist_dict['rl']['timestamp']) == 13:
-                print('hello')
+            
             self.hist_dict['rl']['timestamp'].append(copy.deepcopy(date))
             self.hist_dict['rl']['positions'].append(copy.deepcopy(portfolio.positions))
             self.hist_dict['rl']['cash'].append(copy.deepcopy(portfolio.cash_position))
@@ -209,9 +208,6 @@ class Broker(ABC):
 
 
     def get_portfolio_value_and_weights(self, portfolio, prices):
-        if len(self.hist_dict['rl']['timestamp']) == 13:
-            if type(portfolio).__name__ == 'RLPortfolio':
-                print('hello')
         portfolio_values = {}
         portfolio_weights = {}
         portfolio_total_value = 0
