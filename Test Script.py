@@ -1,5 +1,4 @@
 # %%
-import random
 from datetime import date
 
 from src.analyzer.analyzer import Analyzer
@@ -49,8 +48,7 @@ config = {
 config['broker']['rl_portfolio'] = RLPortfolio(config['rl_portfolio'])
 config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_portfolio'])
 
-# %%
-random.seed(1)
+# random.seed(1)
 feed = CSVDataFeed(
     DATA_PATH + "/example_data.csv"
 )
@@ -66,3 +64,11 @@ while not done:
 analyzer = Analyzer(env)
 # %%
 df = analyzer.data
+# %%
+analyzer.get_prices()
+# %%
+analyzer.get_cash("rl")
+# %%
+analyzer.get_reward()
+# %%
+analyzer.plot_reward()

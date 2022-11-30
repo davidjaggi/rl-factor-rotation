@@ -1,5 +1,4 @@
 # %%
-import random
 
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
@@ -48,8 +47,7 @@ def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_sc
     config['broker']['rl_portfolio'] = RLPortfolio(config['rl_portfolio'])
     config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_portfolio'])
 
-    # %%
-    random.seed(1)
+    # random.seed(1)
     feed = CSVDataFeed(
         DATA_PATH + training_data
     )

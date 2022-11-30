@@ -9,7 +9,7 @@ class Broker(ABC):
 
     def __init__(self, data_feed, config):
         self.data_feed = data_feed
-        self.config = config # TODO: This makes it so that we store the portfolios twice, once in the config and again in the Broker, I suggest we delete it.
+        self.config = config  # TODO: This makes it so that we store the portfolios twice, once in the config and again in the Broker, I suggest we delete it.
         self.transaction_cost = self.config['transaction_cost']
         self.start_date = self.config['start_date']
         self.hist_dict = self._create_hist_dict()
@@ -56,43 +56,38 @@ class Broker(ABC):
         portfolio.reset(self.start_date, prices)
         self._record_prices(prices, date)
         # record the initial positions of the portfolio
-        portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio, prices)
+        portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
+                                                                                                       prices)
         self._record_positions(portfolio, date)
 
         return portfolio
 
-
     def update_ideal_weights(self, portfolio, delta):
         updated_ideal_weights = {}
         for key, value in portfolio.ideal_weights.items():
-            updated_ideal_weights[key] = round(value + delta[key],2)
+            updated_ideal_weights[key] = round(value + delta[key], 2)
         # Check for rounding errors
-        if round(sum(list(updated_ideal_weights.values())),2) != 1:
+        if round(sum(list(updated_ideal_weights.values())), 2) != 1:
             for key, value in updated_ideal_weights.items():
-                updated_ideal_weights = round(value/sum(list(portfolio.ideal_weights.values())), 2)
+                updated_ideal_weights = round(value / sum(list(portfolio.ideal_weights.values())), 2)
 
         # Check for feasibility ( all weights must be 0 > w > 1
         if all([weight >= 0 and weight <= 1 for weight in list(updated_ideal_weights.values())]):
             portfolio.ideal_weights = updated_ideal_weights
 
-
-
-
     def _record_prices(self, prices, date):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
 
-        if len(self.hist_dict['historical_asset_prices'])==0:
+        if len(self.hist_dict['historical_asset_prices']) == 0:
             self.hist_dict['historical_asset_prices'].append(copy.deepcopy({'timestamp': date, 'prices': prices}))
         elif date != self.hist_dict['historical_asset_prices'][-1]['timestamp']:
             self.hist_dict['historical_asset_prices'].append(copy.deepcopy({'timestamp': date, 'prices': prices}))
         else:
             pass
 
-
     def _record_positions(self, portfolio, date):
         """ Record the positions of the portfolio (and avalilable cash) and append it to the hist dict for the correct portfolio """
         if type(portfolio).__name__ != 'RLPortfolio':
-
 
             self.hist_dict['benchmark']['timestamp'].append(copy.deepcopy(date))
             self.hist_dict['benchmark']['positions'].append(copy.deepcopy(portfolio.positions))
@@ -102,7 +97,6 @@ class Broker(ABC):
             self.hist_dict['benchmark']['ideal_weights'].append(copy.deepcopy(portfolio.ideal_weights))
 
         else:
-            
             self.hist_dict['rl']['timestamp'].append(copy.deepcopy(date))
             self.hist_dict['rl']['positions'].append(copy.deepcopy(portfolio.positions))
             self.hist_dict['rl']['cash'].append(copy.deepcopy(portfolio.cash_position))
@@ -110,13 +104,11 @@ class Broker(ABC):
             self.hist_dict['rl']['portfolio_values'].append(copy.deepcopy(portfolio.portfolio_values))
             self.hist_dict['rl']['ideal_weights'].append(copy.deepcopy(portfolio.ideal_weights))
 
-
     def rebalance(self, date, prices, portfolio):  # TODO: rename function to rebalance_and_log
         # TODO: If we decide to have multiple benchmark portfolios, we can put them in a list and turn this function into a loop
         self.rebalance_portfolio(date, prices, portfolio)
         # record the prices for the specific period
         self._record_prices(prices, date)
-
 
     def rebalance_portfolio(self, date, prices, portfolio):
         # In the first step we want to take the ideal weights of the portfolio and adjust them
@@ -141,7 +133,8 @@ class Broker(ABC):
 
             for i, (asset, transaction_dict) in enumerate(rebalance_dict.items()):
                 if transaction_dict['transaction_shares'] < 0:
-                    incoming_cash += -transaction_dict['transaction_value'] #TODO: Transaction costs should be accounted for in this line(s)
+                    incoming_cash += -transaction_dict[
+                        'transaction_value']  # TODO: Transaction costs should be accounted for in this line(s)
                 else:
                     outgoing_cash += transaction_dict['transaction_value']
 
@@ -175,13 +168,13 @@ class Broker(ABC):
                             # We buy one more share of said asset
                             portfolio.positions[asset] += 1
                             portfolio.cash_position += -prices[asset]
-            portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio, prices)
+            portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
+                                                                                                           prices)
             # Record the trades in the trade logs
         else:
             portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
                                                                                                            prices)
         self._record_positions(portfolio, date)
-
 
     def get_trades_for_rebalance(self, portfolio, prices):
         """" Get the necessary transactions to carry out a Portfolio's rebalance given its current positions,
@@ -206,7 +199,6 @@ class Broker(ABC):
 
         return rebalance_dict
 
-
     def get_portfolio_value_and_weights(self, portfolio, prices):
         portfolio_values = {}
         portfolio_weights = {}
@@ -219,12 +211,11 @@ class Broker(ABC):
         portfolio_values['total_value'] = portfolio_total_value
 
         for i, (asset, position_value) in enumerate(portfolio_values.items()):
-            portfolio_weights[asset] = portfolio_values[asset]/portfolio_values['total_value']
+            portfolio_weights[asset] = portfolio_values[asset] / portfolio_values['total_value']
 
         portfolio_values['cash'] = portfolio.cash_position
 
         return portfolio_values, portfolio_weights
-
 
     def get_portfolio_value(self, portfolio, prices):
         portfolio_values = {}
@@ -235,6 +226,3 @@ class Broker(ABC):
         portfolio_values['total_value'] = sum(portfolio_values.values()) + portfolio.cash_position
 
         return portfolio_values['total_value']
-
-
-
