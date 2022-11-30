@@ -66,3 +66,11 @@ while not done:
 analyzer = Analyzer(env)
 # %%
 df = analyzer.data
+# %%
+analyzer.get_prices()
+# %%
+analyzer.get_cash("rl")
+# %%
+df_compare = analyzer.compare()
+# %%
+[col for col in df_compare.columns if "diff" in col[1]]

@@ -4,8 +4,6 @@ from datetime import date
 import streamlit as st
 
 from src.analyzer.analyzer import Analyzer
-from src.env.dataframe import compare
-from src.env.dataframe import splitting
 from src.server.runner import ret
 
 
@@ -13,14 +11,17 @@ def run():
     st.set_page_config(page_title="Real-Time RL Dashboard", page_icon="✅", layout="wide")
     # dashboard title
     st.title("RL Dashboard")
-    days = st.text_input(label='Days', value=125)
-    initial_balance = st.text_input(label='Initial balance', value=10000)
-    start_date = st.date_input(label='Start date', value=date(2018, 12, 31))
-    end_date = st.date_input(label='End date', value=date(2020, 12, 31))
-    reward_scaling = st.number_input(label='Reward scaling', value=1, step=1)
-    obs_price_hist = st.number_input(label='Observation price history', value=5, step=1)
-    transaction_cost = float(st.text_input(label='Transaction costs in %', value=0.05)) / 100
-    weighting_method = st.selectbox(label='Weighting method', options=['equally_weighted'])
+    col1, col2 = st.columns(2)
+    with col1:
+        days = st.text_input(label='Days', value=125)
+        initial_balance = st.text_input(label='Initial balance', value=10000)
+        start_date = st.date_input(label='Start date', value=date(2018, 12, 31))
+        end_date = st.date_input(label='End date', value=date(2020, 12, 31))
+    with col2:
+        reward_scaling = st.number_input(label='Reward scaling', value=1, step=1)
+        obs_price_hist = st.number_input(label='Observation price history', value=5, step=1)
+        transaction_cost = float(st.text_input(label='Transaction costs in %', value=0.05)) / 100
+        weighting_method = st.selectbox(label='Weighting method', options=['equally_weighted'])
     training_data = st.selectbox(label='Training data', options=['/example_data.csv'])
 
     if st.button(label='Run Script'):
@@ -33,7 +34,6 @@ def run():
             return df.to_csv(index=True).encode('utf-8')
 
         csv = convert_df(df)
-        df.to_csv('/Users/kiafarokhnia/Downloads/file1.csv')
         # allow to download data from stramlit
         st.download_button(
             "Press to Download",
@@ -42,36 +42,41 @@ def run():
             "text/csv",
             key='download-csv'
         )
+        with col1:
+            st.header('Benchmark holdings')
+            st.line_chart(analyzer.get_positions("benchmark"))
 
-        df, df_bm, df_rl, df_hist, df_cash, df_value, df_position_bm, \
-        df_position_rl, df_weight_bm, df_weight_rl = splitting(df)
+        with col2:
+            st.header('RL Agent holdings')
+            st.line_chart(analyzer.get_positions("rl"))
 
-        st.header('Benchmark holdings')
-        st.line_chart(df_position_bm)
+        with col1:
+            st.header('Benchmark weights')
+            st.area_chart(analyzer.get_weights("benchmark"))
 
-        st.header('RL Agent holdings')
-        st.line_chart(df_position_rl)
-
-        st.header('Benchmark weights')
-        st.area_chart(df_weight_bm)
-
-        st.header('RL weights')
-        st.area_chart(df_weight_rl)
+        with col2:
+            st.header('RL weights')
+            st.area_chart(analyzer.get_weights("rl"))
 
         st.header('Portfolio value')
-        st.line_chart(df_value)
+        st.line_chart(analyzer.get_values("benchmark"))
 
         st.header('Cash positions')
-        st.line_chart(df_cash)
+        with col1:
+            st.line_chart(analyzer.get_cash("benchmark"))
+        with col2:
+            st.line_chart(analyzer.get_cash("rl"))
 
-        st.header('Historical asset prices')
-        st.line_chart(df_hist)
+        with col1:
+            st.header('Historical asset prices')
+            st.line_chart(analyzer.get_prices())
 
-        df_comparison = compare(df)
+        df_compare = analyzer.compare()
+        with col2:
+            st.header('Comparison')
+            st.line_chart(df_compare[[col for col in df_compare.columns if "diff" in col[1]]])
 
-        st.line_chart(df_comparison[['diff_weight_google_bm', 'diff_weight_apple_bm', 'diff_weight_google_rl',
-                                     'diff_weight_apple_rl', 'diff_port_val_bm', 'diff_port_val_rl']])
-        csv2 = convert_df(df_comparison)
+        csv2 = convert_df(df_compare)
         # df_comparison.to_csv('/Users/kiafarokhnia/Downloads/file2.csv')
         # allow to download data from stramlit
         st.download_button(
