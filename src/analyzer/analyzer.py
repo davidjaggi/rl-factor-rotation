@@ -1,5 +1,6 @@
 from abc import ABC
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -85,8 +86,22 @@ class Analyzer(ABC):
         df = df.loc[:, cols]
         return df
 
+    def get_rewards(self):
+        return self.env.rewards_memory
+
+    def get_actions(self):
+        return self.env.actions_memory
+
+    def plot_reward(self):
+        df = self.get_rewards()
+        plt.plot(df)
+        plt.xlabel("Step")
+        plt.ylabel("Reward")
+        plt.title("Reward over time")
+        plt.show()
+
     def compare(self):
-        df = self.data
+        df = self.data.copy()
 
         bm_assets = self.env.config["benchmark_portfolio"]["investment_universe"]
         rl_assets = self.env.config["rl_portfolio"]["investment_universe"]

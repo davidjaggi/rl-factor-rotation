@@ -29,6 +29,7 @@ def run():
                   weighting_method, training_data)
         analyzer = Analyzer(env)
         df = analyzer.data
+        df_compare = analyzer.compare()
 
         def convert_df(df):
             return df.to_csv(index=True).encode('utf-8')
@@ -58,27 +59,37 @@ def run():
             st.header('RL weights')
             st.area_chart(analyzer.get_weights("rl"))
 
-        st.header('Portfolio value')
-        st.line_chart(analyzer.get_values("benchmark"))
-
-        st.header('Cash positions')
         with col1:
+            st.header('Portfolio value benchmark')
+            st.line_chart(analyzer.get_values("benchmark"))
+
+        with col2:
+            st.header('Portfolio value RL')
+            st.line_chart(analyzer.get_values("rl"))
+
+        with col1:
+            st.header('Cash position benchmark')
             st.line_chart(analyzer.get_cash("benchmark"))
         with col2:
+            st.header('Cash position RL')
             st.line_chart(analyzer.get_cash("rl"))
+
+        with col1:
+            st.header('Reward')
+            st.line_chart(analyzer.get_rewards())
+        with col2:
+            st.header('Actions')
+            st.line_chart(analyzer.get_actions())
 
         with col1:
             st.header('Historical asset prices')
             st.line_chart(analyzer.get_prices())
 
-        df_compare = analyzer.compare()
         with col2:
             st.header('Comparison')
             st.line_chart(df_compare[[col for col in df_compare.columns if "diff" in col[1]]])
 
         csv2 = convert_df(df_compare)
-        # df_comparison.to_csv('/Users/kiafarokhnia/Downloads/file2.csv')
-        # allow to download data from stramlit
         st.download_button(
             "Press to Download",
             csv2,
