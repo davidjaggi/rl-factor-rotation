@@ -69,7 +69,7 @@ class Broker(ABC):
         # Check for rounding errors
         if round(sum(list(updated_ideal_weights.values())), 2) != 1:
             for key, value in updated_ideal_weights.items():
-                updated_ideal_weights = round(value / sum(list(portfolio.ideal_weights.values())), 2)
+                updated_ideal_weights[key] = round(value / sum(list(portfolio.ideal_weights.values())), 2)
 
         # Check for feasibility ( all weights must be 0 > w > 1
         if all([weight >= 0 and weight <= 1 for weight in list(updated_ideal_weights.values())]):
@@ -161,6 +161,7 @@ class Broker(ABC):
             #
             prices_buys = [price for i, (asset, price) in enumerate(prices.items()) if
                            rebalance_dict[asset]['transaction_shares'] > 0]
+
             if prices_buys != []:
                 while portfolio.cash_position > min(prices_buys):
                     for i, (asset, transaction) in enumerate(rebalance_dict.items()):
@@ -171,6 +172,7 @@ class Broker(ABC):
             portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
                                                                                                            prices)
             # Record the trades in the trade logs
+
         else:
             portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
                                                                                                            prices)

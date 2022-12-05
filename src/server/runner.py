@@ -14,18 +14,18 @@ def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_sc
         'benchmark_portfolio': {
             'name': 'benchmark_portfolio',
             'rebalancing_type': weighting_method,
-            'investment_universe': ["GOOGL.O", "AAPL.O"],
+            'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
             'initial_balance': int(initial_balance),
-            'initial_weights': [0.5, 0.5],
+            'initial_weights': [0.25, 0.25, 0.25, 0.25],
             'restrictions': dict(),
             'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
         },
         'rl_portfolio': {
             'name': 'rl_portfolio',
             'rebalancing_type': None,
-            'investment_universe': ["GOOGL.O", "AAPL.O"],
+            'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
             'initial_balance': int(initial_balance),
-            'initial_weights': [0.5, 0.5],
+            'initial_weights': [0.25, 0.25, 0.25, 0.25],
             'restrictions': dict(),
             'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
         },

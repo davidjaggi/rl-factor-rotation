@@ -22,7 +22,7 @@ def run():
         obs_price_hist = st.number_input(label='Observation price history', value=5, step=1)
         transaction_cost = float(st.text_input(label='Transaction costs in %', value=0.05)) / 100
         weighting_method = st.selectbox(label='Weighting method', options=['equally_weighted'])
-    training_data = st.selectbox(label='Training data', options=['/example_data.csv'])
+    training_data = st.selectbox(label='Training data', options=['/example_factor_clean.csv', '/example_data.csv'])
 
     if st.button(label='Run Script'):
         env = ret(days, initial_balance, start_date, end_date, transaction_cost, reward_scaling, obs_price_hist,

@@ -25,12 +25,11 @@ class BaseEnv(gym.Env, ABC):
         self.data_feed = data_feed
         self.indicator_pipeline = indicator_pipeline
 
-        # self.observation_space = self.build_observation_space()
-        self.action_space = self.build_action_space()
 
         # initialize the broker and the portfolios
         self.broker = Broker(config=self.config["broker"], data_feed=self.data_feed)
         self.rl_portfolio = RLPortfolio(self.config["rl_portfolio"])
+        self.action_space = self.build_action_space(len(self.config['rl_portfolio']['investment_universe']))
         self.benchmark_portfolio = BenchmarkPortfolio(self.config["benchmark_portfolio"])
 
         self.reward_scaling = self.config['agent']["reward_scaling"]
@@ -195,9 +194,9 @@ class BaseEnv(gym.Env, ABC):
             dtype=np.float64
         )
 
-    def build_action_space(self):
+    def build_action_space(self, n_assets):
         # return three discrete action
-        return gym.spaces.Discrete(3)
+        return gym.spaces.Discrete(n_assets+1)
 
     def reward_func(self, prices):
         """Reward function for the portfolio. Currently the distance of the portfolio to the benchmark."""

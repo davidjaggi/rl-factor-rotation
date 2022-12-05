@@ -58,7 +58,9 @@ class Analyzer(ABC):
 
     def get_weights(self, portfolio):
         df = self.data[portfolio]
-        cols = df.columns.str.contains(r"weight_")
+        mask1 = df.columns.str.contains(r"weight_")
+        mask2 = ~df.columns.str.contains(r"weight_total_value")
+        cols = mask1 & mask2
         df = df.loc[:, cols]
         return df
 

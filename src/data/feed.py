@@ -38,7 +38,7 @@ class Feed(object):
 
 
 class CSVDataFeed(Feed):
-    def __init__(self, file_name, price_field_name="Price Close", *args, **kwargs):
+    def __init__(self, file_name, price_field_name="price", *args, **kwargs):
         super(CSVDataFeed, self).__init__(
             price_field_name=price_field_name, *args, **kwargs
         )
@@ -53,10 +53,11 @@ class CSVDataFeed(Feed):
         # only download new data if start and end date are not the same as before or if data is empty
         if (self.start_date != start_dt or self.end_date != kwargs.get('end_date', None)) or not hasattr(self, 'data'):
 
-            data = pd.read_csv(self.file_name, index_col=0)
+            data = pd.read_csv(self.file_name)
             data["Date"] = pd.to_datetime(
-                data["Date"], format="%Y-%m-%d"
+                data["Date"], format="%Y%m%d"
             ).dt.tz_localize(None)
+
 
             if self.start_date is None:
                 self.start_date = data.Date.min().strftime("%Y-%m-%d")
@@ -150,7 +151,7 @@ class CSVDataFeed(Feed):
         # And update the dt to the next prices snapshot
         dt_idx = self.data[list(self.data.keys())[0]].index.get_loc(date)
         self.dt = self.data[list(self.data.keys())[0]].index[dt_idx + 1]
-        prices = {k: v['Price Open'] for k, v in prices.items()}
+        prices = {k: v['price'] for k, v in prices.items()}
         return prices
 
     def get_dates(self):
@@ -169,7 +170,7 @@ class CSVDataFeed(Feed):
             # fill missing dates with 0
             prices[asset] = prices[asset].reindex(pd.date_range(date - timedelta(days=offset - 1), date), fill_value=0)
 
-        prices_array = [prices[asset]["Price Open"].values for asset in prices.keys()]
+        prices_array = [prices[asset]["price"].values for asset in prices.keys()]
         return prices_array
 
     def get_idx(self, date):
