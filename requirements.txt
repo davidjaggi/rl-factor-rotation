@@ -3,24 +3,23 @@ altair==4.2.0
 astunparse==1.6.3
 attrs==21.4.0
 blinker==1.5
-brotlipy==0.7.0
 cachetools==5.2.0
 certifi==2022.9.24
-cffi==1.15.1
-charset-normalizer==2.1.0
+cffi@ file:///D:/bld/cffi_1656782930891/work
+charset-normalizer@ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1655906222726/work
 click==8.0.4
-cloudpickle==2.1.0
+cloudpickle@ file:///home/conda/feedstock_root/build_artifacts/cloudpickle_1653061851209/work
 colorama==0.4.4
 commonmark==0.9.1
-cryptography==37.0.4
-cycler==0.11.0
+cryptography@ file:///D:/bld/cryptography_1657174166005/work
+cycler@ file:///home/conda/feedstock_root/build_artifacts/cycler_1635519461629/work
 decorator==5.1.1
 Deprecated==1.2.13
 dm-tree==0.1.6
 entrypoints==0.4
 filelock==3.6.0
 flatbuffers==1.12
-fonttools==4.36.0
+fonttools@ file:///D:/bld/fonttools_1660773561800/work
 gast==0.4.0
 gitdb==4.0.9
 GitPython==3.1.29
@@ -28,67 +27,66 @@ google-auth==2.11.0
 google-auth-oauthlib==0.4.6
 google-pasta==0.2.0
 grpcio==1.43.0
-gym==0.21.0
+gym@ file:///D:/bld/gym_1644329041679/work
 h5py==3.7.0
-idna==3.3
+idna@ file:///home/conda/feedstock_root/build_artifacts/idna_1642433548627/work
 imageio==2.16.1
 importlib-metadata==4.12.0
 Jinja2==3.1.2
 jsonschema==4.4.0
 keras==2.9.0
 Keras-Preprocessing==1.1.2
-kiwisolver==1.4.4
+kiwisolver@ file:///D:/bld/kiwisolver_1657953200729/work
 libclang==14.0.6
-lxml==4.9.1
+lxml@ file:///D:/bld/lxml_1656759787141/work
 lz4==4.0.0
 Markdown==3.4.1
 MarkupSafe==2.1.1
-matplotlib==3.5.3
+matplotlib@ file:///D:/bld/matplotlib-suite_1660700903987/work
 msgpack==1.0.3
 munkres==1.1.4
 networkx==2.7.1
-numpy==1.22.3
+numpy@ file:///D:/bld/numpy_1651020773031/work
 oauthlib==3.2.0
 opt-einsum==3.3.0
-packaging==21.3
-pandas==1.4.3
-pandas-datareader==0.10.0
-Pillow==9.2.0
+packaging@ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
+pandas@ file:///D:/bld/pandas_1656001279371/work
+pandas-datareader@ file:///home/conda/feedstock_root/build_artifacts/pandas-datareader_1626254169655/work
+Pillow@ file:///D:/bld/pillow_1660386017005/work
 plotly==5.11.0
 ply==3.11
 protobuf==3.19.4
 pyarrow==10.0.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pycparser==2.21
+pycparser@ file:///home/conda/feedstock_root/build_artifacts/pycparser_1636257122734/work
 pydeck==0.8.0
 Pygments==2.13.0
 Pympler==1.0.1
-pyOpenSSL==22.0.0
-pyparsing==3.0.9
+pyOpenSSL@ file:///home/conda/feedstock_root/build_artifacts/pyopenssl_1643496850550/work
+pyparsing@ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1652235407899/work
 PyQt5==5.15.7
-PyQt5-sip==12.11.0
+PyQt5-sip@ file:///D:/bld/pyqt-split_1657234646811/work/pyqt_sip
 pyrsistent==0.18.1
-PySocks==1.7.1
-python-dateutil==2.8.2
-pytz==2022.2.1
+PySocks@ file:///D:/bld/pysocks_1648857426942/work
+python-dateutil@ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
+pytz@ file:///home/conda/feedstock_root/build_artifacts/pytz_1660580468234/work
 pytz-deprecation-shim==0.1.0.post0
 PyWavelets==1.3.0
 PyYAML==6.0
 ray==1.11.0
 redis==4.1.4
-requests==2.28.1
+requests@ file:///home/conda/feedstock_root/build_artifacts/requests_1656534056640/work
 requests-oauthlib==1.3.1
 rich==12.6.0
 rsa==4.9
 scikit-image==0.19.2
 scipy==1.8.0
 semver==2.13.0
-setuptools==65.0.2
-sip==6.6.2
-six==1.16.0
+sip@ file:///D:/bld/sip_1655765083928/work
+six@ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
 smmap==5.0.0
-streamlit==1.15.0
+streamlit==1.15.1
 streamlit-tags==1.2.8
 tabulate==0.8.9
 tenacity==8.1.0
@@ -101,19 +99,17 @@ tensorflow-estimator==2.9.0
 tensorflow-io-gcs-filesystem==0.26.0
 termcolor==1.1.0
 tifffile==2022.3.16
-toml==0.10.2
+toml@ file:///home/conda/feedstock_root/build_artifacts/toml_1604308577558/work
 toolz==0.12.0
-torch==1.11.0
-tornado==6.2
+tornado@ file:///D:/bld/tornado_1656937934674/work
 typing_extensions==4.1.1
 tzdata==2022.6
 tzlocal==4.2
-unicodedata2==14.0.0
-urllib3==1.26.11
+unicodedata2@ file:///D:/bld/unicodedata2_1649112114189/work
+urllib3@ file:///home/conda/feedstock_root/build_artifacts/urllib3_1658789158161/work
 validators==0.20.0
 watchdog==2.1.9
 Werkzeug==2.2.2
-wheel==0.37.1
-win-inet-pton==1.1.0
+win-inet-pton@ file:///D:/bld/win_inet_pton_1648771910527/work
 wrapt==1.14.0
 zipp==3.8.1

@@ -14,7 +14,7 @@ def run():
     col1, col2 = st.columns(2)
     with col1:
         days = st.text_input(label='Days', value=125)
-        initial_balance = st.text_input(label='Initial balance', value=10000)
+        initial_balance = st.text_input(label='Initial balance', value=1000000)
         start_date = st.date_input(label='Start date', value=date(2018, 12, 31))
         end_date = st.date_input(label='End date', value=date(2020, 12, 31))
     with col2:

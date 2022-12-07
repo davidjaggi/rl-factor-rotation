@@ -19,17 +19,17 @@ class BaseEnv(gym.Env, ABC):
     """
 
     def __init__(
-            self, config=None, data_feed=None, indicator_pipeline=[]):
+            self, config=None):
         """Initialises the class"""
         self.config = config
-        self.data_feed = data_feed
-        self.indicator_pipeline = indicator_pipeline
-
+        self.data_feed = config["data"]["feed"]
+        self.indicator_pipeline = config["data"]["indicator_pipeline"]
 
         # initialize the broker and the portfolios
         self.broker = Broker(config=self.config["broker"], data_feed=self.data_feed)
         self.rl_portfolio = RLPortfolio(self.config["rl_portfolio"])
         self.action_space = self.build_action_space(len(self.config['rl_portfolio']['investment_universe']))
+        self.observation_space = self.build_observation_space()
         self.benchmark_portfolio = BenchmarkPortfolio(self.config["benchmark_portfolio"])
 
         self.reward_scaling = self.config['agent']["reward_scaling"]
@@ -182,12 +182,13 @@ class BaseEnv(gym.Env, ABC):
 
     def build_observation_space(self):
         """Builds the observation space"""
+        n_assets = len(self.config["rl_portfolio"]["investment_universe"])
         return gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
             # TODO get the number of assets from the broker class
             shape=(
-                self.config["obs_price_hist"] * 2
+                self.config["agent"]["obs_price_hist"] * n_assets
                 + 2
                 + 1,
             ),

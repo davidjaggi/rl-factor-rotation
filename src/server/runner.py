@@ -8,6 +8,7 @@ from src.utils.load_path import load_data_path
 
 DATA_PATH = load_data_path()
 # %%
+# random.seed(1)
 
 def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_scaling, obs_price_hist, weighting_method, training_data):
     config = {
@@ -40,18 +41,17 @@ def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_sc
         'agent': {
             "reward_scaling": int(reward_scaling),
             "obs_price_hist": int(obs_price_hist),
-        }
+        },
+        "data": {'feed': CSVDataFeed(DATA_PATH + training_data),
+                 'indicator_pipeline': []
+                 }
     }
 
     # Specify the portfolio configurations
     config['broker']['rl_portfolio'] = RLPortfolio(config['rl_portfolio'])
     config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_portfolio'])
 
-    # random.seed(1)
-    feed = CSVDataFeed(
-        DATA_PATH + training_data
-    )
-    env = BaseEnv(config=config, data_feed=feed, indicator_pipeline=[])
+    env = BaseEnv(config=config)
 
     env.reset()
     for i in range(int(days)):

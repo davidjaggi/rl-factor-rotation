@@ -49,3 +49,12 @@ class CustomExperiment():
             obs, rew, done, _ = env.step(action)
             episode_reward = np.append(episode_reward, rew)
         return episode_reward
+
+    def register_env(self, env_name, env_creator):
+        """
+        Register an environment with the experiment.
+        :param env_name: Name of the environment
+        :param env_creator: Function that creates the environment
+        """
+        # register the environment with the experiment
+        tune.register_env(env_name, env_creator)
