@@ -115,8 +115,8 @@ class BaseEnv(gym.Env, ABC):
         if actions == 0:
             delta = {asset: 0 for asset in portfolio.investment_universe}
         else:
-            delta = {asset: round(-0.05 / (n_assets - 1),2) for asset in portfolio.investment_universe}
-            delta[portfolio.investment_universe[actions - 1]] = 0.05
+            delta = {asset: round(-0.01 / (n_assets - 1),2) for asset in portfolio.investment_universe}
+            delta[portfolio.investment_universe[actions - 1]] = 0.01
 
         return delta
 

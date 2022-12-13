@@ -161,7 +161,7 @@ class Broker(ABC):
                 portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
             # We record the change in cash
             portfolio.cash_position += incoming_cash - outgoing_cash
-
+            '''
             # TODO: If the cash position left is bigger than the price of some of the buys, we scale up the buys of the portfolio
             #
             prices_buys = [price for i, (asset, price) in enumerate(prices.items()) if
@@ -177,7 +177,7 @@ class Broker(ABC):
             portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
                                                                                                            prices)
             # Record the trades in the trade logs
-
+            '''
         else:
             portfolio.portfolio_values, portfolio.portfolio_weights = self.get_portfolio_value_and_weights(portfolio,
                                                                                                            prices)
