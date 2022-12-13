@@ -60,6 +60,14 @@ def run():
             st.area_chart(analyzer.get_weights("rl"))
 
         with col1:
+            st.header('Benchmark ideal weights')
+            st.area_chart(analyzer.get_ideal_weights("benchmark"))
+
+        with col2:
+            st.header('RL ideal weights')
+            st.area_chart(analyzer.get_ideal_weights("rl"))
+
+        with col1:
             st.header('Portfolio value benchmark')
             st.line_chart(analyzer.get_values("benchmark"))
 

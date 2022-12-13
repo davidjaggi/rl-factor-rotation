@@ -14,7 +14,7 @@ class Analyzer(ABC):
 
         index_list = [k for k in hist_dict.keys() if k != "historical_asset_prices"]
         multiindex = pd.MultiIndex.from_product(
-            [index_list, ['timestamp', 'cash', 'positions', 'portfolio_values', 'portfolio_weights']])
+            [index_list, ['timestamp', 'cash', 'positions', 'portfolio_values', 'portfolio_weights', 'ideal_weights']])
         # df from multiindex
         df = pd.DataFrame(index=hist_dict["benchmark"]['timestamp'], columns=multiindex)
         # iterate over multiindex
@@ -24,15 +24,18 @@ class Analyzer(ABC):
             df[key, 'positions'] = hist_dict[key]['positions']
             df[key, 'portfolio_values'] = hist_dict[key]['portfolio_values']
             df[key, 'portfolio_weights'] = hist_dict[key]['portfolio_weights']
+            df[key, 'ideal_weights'] = hist_dict[key]['ideal_weights']
         # iterate through multiindex
         for key in ["benchmark", "rl"]:
-            for col in ["positions", "portfolio_values", "portfolio_weights"]:
+            for col in ["positions", "portfolio_values", "portfolio_weights", "ideal_weights"]:
                 if col == "positions":
                     prefix = "position_"
                 elif col == "portfolio_values":
                     prefix = "value_"
                 elif col == "portfolio_weights":
                     prefix = "weight_"
+                elif col == "ideal_weights":
+                    prefix = "ideal_weight_"
                 # explode the list of dicts into new multiindex columns
                 df_intermediate = pd.json_normalize(df[key, col])
                 # rename the columns
@@ -60,7 +63,18 @@ class Analyzer(ABC):
         df = self.data[portfolio]
         mask1 = df.columns.str.contains(r"weight_")
         mask2 = ~df.columns.str.contains(r"weight_total_value")
-        cols = mask1 & mask2
+        mask3 = ~df.columns.str.contains(r"ideal_weight_")
+        cols = mask1 & mask2 & mask3
+        df = df.loc[:, cols]
+        return df
+
+    def get_ideal_weights(self, portfolio):
+        df = self.data[portfolio]
+        mask1 = df.columns.str.contains(r"ideal_weight_")
+        #mask2 = ~df.columns.str.contains(r"weight_total_value")
+        #mask3 = ~df.columns.str.contains(r"ideal_weight_")
+        #cols = mask1 & mask2 & mask3
+        cols = mask1
         df = df.loc[:, cols]
         return df
 

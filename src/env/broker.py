@@ -139,18 +139,23 @@ class Broker(ABC):
                     outgoing_cash += transaction_dict['transaction_value']
 
             while incoming_cash + portfolio.cash_position < outgoing_cash:
-                # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
+                new_list = []
                 for i, (asset, transaction) in enumerate(rebalance_dict.items()):
-                    if incoming_cash + portfolio.cash_position < outgoing_cash and transaction[
-                        'transaction_shares'] > 0:
-                        # We need to scale down this purchase
-                        available_capital = incoming_cash + portfolio.cash_position
-                        rebalance_dict[asset]['transaction_shares'] += -int(
-                            (outgoing_cash - (available_capital)) / prices[asset]) - 1  #
-                        # Update the outgoing cash
-                        outgoing_cash += (-int((outgoing_cash - (available_capital)) / prices[asset]) - 1) * prices[
-                            asset]
-                        # TODO: Currently this only scales down the first "buy" transaction it finds in the dictionary, if we are buying more than one asset we would have to implement a "scale down method" (for example buy 1 share less iteratively from all buys until we have enough capital)
+                    if transaction['transaction_shares'] > 0:
+                        new_list.append(asset)
+
+                # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
+
+                for i, (asset, transaction) in enumerate(rebalance_dict.items()):
+                    if asset in new_list:
+                        if incoming_cash + portfolio.cash_position < outgoing_cash:
+                            available_capital = incoming_cash + portfolio.cash_position
+                            rebalance_dict[asset]['transaction_shares'] += -int(
+                                (outgoing_cash - (available_capital)) / prices[asset]) - 1  #
+                            # Update the outgoing cash
+                            outgoing_cash += (-int((outgoing_cash - (available_capital)) / prices[asset]) - 1) * prices[
+                                asset]
+
             # We now have enough capital to carry out the rebalance so we carry out the trades and update our cash and positions
             for i, (asset, transaction) in enumerate(rebalance_dict.items()):
                 portfolio.positions[asset] += rebalance_dict[asset]['transaction_shares']
