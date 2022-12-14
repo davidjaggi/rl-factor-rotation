@@ -67,13 +67,30 @@ class Broker(ABC):
         for key, value in portfolio.ideal_weights.items():
             updated_ideal_weights[key] = value + delta[key]
         # Check for rounding errors
-        if round(sum(list(updated_ideal_weights.values())), 2) != 1:
+        if sum(list(updated_ideal_weights.values())) != 1:
             for key, value in updated_ideal_weights.items():
-                updated_ideal_weights[key] = round(value / sum(list(portfolio.ideal_weights.values())), 2)
+                updated_ideal_weights[key] = value / sum(list(portfolio.ideal_weights.values()))
 
         # Check for feasibility ( all weights must be 0 > w > 1 )
         if all([weight >= 0 and weight <= 1 for weight in list(updated_ideal_weights.values())]):
             portfolio.ideal_weights = updated_ideal_weights
+        elif any([weight < 0 for weight in list(updated_ideal_weights.values())]):
+            # add long only contraint
+            # check if values contain negative values
+            # sum the weights which are lower than 0
+            sum_negative_weights = sum([value for value in updated_ideal_weights.values() if value < 0])
+            # divide the sum by the number of positive weights
+            adj_negative_weights = sum_negative_weights / len(
+                [value for value in updated_ideal_weights.values() if value > 0])
+            # reduce positive weights by the sum of negative weights
+            for key, value in updated_ideal_weights.items():
+                if value >= -adj_negative_weights:
+                    updated_ideal_weights[key] = value + adj_negative_weights
+                else:
+                    updated_ideal_weights[key] = 0
+            portfolio.ideal_weights = updated_ideal_weights
+        else:
+            raise ValueError(f'The ideal weights are not feasible: {updated_ideal_weights}')
 
     def _record_prices(self, prices, date):
         """ Record the prices of the assets in the portfolio and append it to the hist dict """
