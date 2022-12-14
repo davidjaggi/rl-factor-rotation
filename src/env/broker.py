@@ -65,13 +65,13 @@ class Broker(ABC):
     def update_ideal_weights(self, portfolio, delta):
         updated_ideal_weights = {}
         for key, value in portfolio.ideal_weights.items():
-            updated_ideal_weights[key] = round(value + delta[key], 2)
+            updated_ideal_weights[key] = value + delta[key]
         # Check for rounding errors
         if round(sum(list(updated_ideal_weights.values())), 2) != 1:
             for key, value in updated_ideal_weights.items():
                 updated_ideal_weights[key] = round(value / sum(list(portfolio.ideal_weights.values())), 2)
 
-        # Check for feasibility ( all weights must be 0 > w > 1
+        # Check for feasibility ( all weights must be 0 > w > 1 )
         if all([weight >= 0 and weight <= 1 for weight in list(updated_ideal_weights.values())]):
             portfolio.ideal_weights = updated_ideal_weights
 
