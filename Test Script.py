@@ -18,7 +18,7 @@ config = {
         'investment_universe': ["GOOGL.O", "AAPL.O"],
         'initial_balance': int(10000),
         'initial_weights': [0.5, 0.5],
-        'restrictions': dict(),
+        'restrictions': {"direction": "long_only"},
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'rl_portfolio': {
@@ -27,7 +27,7 @@ config = {
         'investment_universe': ["GOOGL.O", "AAPL.O"],
         'initial_balance': int(10000),
         'initial_weights': [0.5, 0.5],
-        'restrictions': dict(),
+        'restrictions': {"direction": "long_only"},
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'broker': {

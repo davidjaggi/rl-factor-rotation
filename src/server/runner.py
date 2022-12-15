@@ -17,7 +17,7 @@ def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_sc
             'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
             'initial_balance': int(initial_balance),
             'initial_weights': [0.25, 0.25, 0.25, 0.25],
-            'restrictions': dict(),
+            'restrictions': {"direction": "long_only"},
             'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
         },
         'rl_portfolio': {
@@ -26,7 +26,7 @@ def ret(days, initial_balance, start_date, end_date, transaction_cost, reward_sc
             'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
             'initial_balance': int(initial_balance),
             'initial_weights': [0.25, 0.25, 0.25, 0.25],
-            'restrictions': dict(),
+            'restrictions': {"direction": "long_only"},
             'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
         },
         'broker': {

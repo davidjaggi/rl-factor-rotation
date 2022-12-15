@@ -66,9 +66,10 @@ class Broker(ABC):
         updated_ideal_weights = {}
         for key, value in portfolio.ideal_weights.items():
             updated_ideal_weights[key] = value + delta[key]
-            # implement long only constraint
-            if updated_ideal_weights[key] < 0:
-                updated_ideal_weights[key] = 0
+
+            if portfolio.restrictions["direction"] == "long_only":
+                if updated_ideal_weights[key] < 0:
+                    updated_ideal_weights[key] = 0
         # Check for rounding errors
         if sum(list(updated_ideal_weights.values())) != 1:
             for key, value in updated_ideal_weights.items():
