@@ -1,4 +1,5 @@
 import copy
+import math
 from abc import ABC
 
 
@@ -125,7 +126,6 @@ class Broker(ABC):
             # Now we need to see whether we can carry out the proposed transactions given the portfolio's positions & cash balance (remember the transaction shares are rounded)
 
             # First we check if we have enough shares to sell
-
             for i, (asset, transaction) in enumerate(rebalance_dict.items()):
                 if rebalance_dict[asset]['transaction_shares'] < 0:
                     # We need to check that we have actually enough shares to sell in each sell transaction
@@ -138,28 +138,17 @@ class Broker(ABC):
 
             for i, (asset, transaction_dict) in enumerate(rebalance_dict.items()):
                 if transaction_dict['transaction_shares'] < 0:
-                    incoming_cash += -transaction_dict[
-                        'transaction_value']  # TODO: Transaction costs should be accounted for in this line(s)
+                    incoming_cash += -transaction_dict['transaction_value']
+                    # TODO: Transaction costs should be accounted for in this line(s)
                 else:
                     outgoing_cash += transaction_dict['transaction_value']
 
-            while incoming_cash + portfolio.cash_position < outgoing_cash:
-                new_list = []
-                for i, (asset, transaction) in enumerate(rebalance_dict.items()):
-                    if transaction['transaction_shares'] > 0:
-                        new_list.append(asset)
-
-                # We don't have enough capital to carry out the rebalance, we scale down the trades until we do.
-
-                for i, (asset, transaction) in enumerate(rebalance_dict.items()):
-                    if asset in new_list:
-                        if incoming_cash + portfolio.cash_position < outgoing_cash:
-                            available_capital = incoming_cash + portfolio.cash_position
-                            rebalance_dict[asset]['transaction_shares'] += -int(
-                                (outgoing_cash - (available_capital)) / prices[asset]) - 1  #
-                            # Update the outgoing cash
-                            outgoing_cash += (-int((outgoing_cash - (available_capital)) / prices[asset]) - 1) * prices[
-                                asset]
+            # Now we check if we have enough cash to buy
+            if incoming_cash + portfolio.cash_position > outgoing_cash:
+                pass
+            else:
+                # If we don't have enough cash we scale down the purchases
+                raise ValueError('Not enough cash to carry out the proposed transactions')
 
             # We now have enough capital to carry out the rebalance so we carry out the trades and update our cash and positions
             for i, (asset, transaction) in enumerate(rebalance_dict.items()):
@@ -205,7 +194,11 @@ class Broker(ABC):
                 transaction_currency_value = (portfolio.ideal_weights[asset] - portfolio_weights[asset]) * \
                                              portfolio_values['total_value']
                 rebalance_dict[asset] = {
-                    'transaction_shares': int(transaction_currency_value / prices[asset].astype(float))}
+                    'transaction_shares': transaction_currency_value / prices[asset].astype(float)}
+
+                # round down the numbers of shares to sell/or buy
+                rebalance_dict[asset]['transaction_shares'] = math.floor(rebalance_dict[asset]['transaction_shares'])
+
                 rebalance_dict[asset]['transaction_value'] = rebalance_dict[asset]['transaction_shares'] * prices[
                     asset].astype(float)
 
