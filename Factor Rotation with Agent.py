@@ -7,6 +7,8 @@ from datetime import date
 import matplotlib.pyplot as plt
 import ray
 from ray.rllib.agents.ppo import PPOTrainer
+from ray.rllib.utils.framework import try_import_tf,
+from ray.rllib.utils.test_utils import check_learning_achieved
 from ray.tune.registry import register_env
 
 from src.data.feed import CSVDataFeed
@@ -15,6 +17,9 @@ from src.env.create_env import create_env
 from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.experiment.custom_experiment import CustomExperiment
 from src.utils.load_path import load_data_path
+
+# %%
+try_import_tf()
 
 # %%
 ray.shutdown()
@@ -50,7 +55,8 @@ ENV_CONFIG = {
     'agent': {
         "reward_scaling": int(1),
         "obs_price_hist": int(250),
-    }
+    },
+    "disable_env_checking": False,
 }
 
 ENV_CONFIG['broker']['rl_portfolio'] = RLPortfolio(ENV_CONFIG['rl_portfolio'])
@@ -73,6 +79,10 @@ config = {
 
 register_env("base_env", create_env)
 # %%
+env = create_env(config["env_config"])
+# todo fix the shape of the observation space
+ray.rllib.utils.check_env(env)
+# %%
 experiment = CustomExperiment(
     config=config,
     env="base_env",
@@ -82,6 +92,9 @@ experiment = CustomExperiment(
 # %%
 # first we train the agent
 experiment.train(stop_criteria={"timesteps_total": 10000})
+# %%
+# check if the agent learned something
+check_learning_achieved(experiment.results, 0.5)
 # %%
 # load the trained agent
 experiment.load(

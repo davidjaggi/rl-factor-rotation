@@ -79,6 +79,7 @@ class BaseEnv(gym.Env, ABC):
                     obs = np.append(obs, inds, axis=0)
         # obs = np.append(obs, self.current_holdings)  # attach current holdings # TODO add current holdings
         # obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value # TODO add last portfolio value
+        # return obs as array
         return obs
 
     def step(self, actions):
