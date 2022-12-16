@@ -7,7 +7,6 @@ from src.env.create_env import create_env
 
 class CustomExperiment():
     def __init__(self, config, env, agent, save_dir):
-        ray.shutdown()
         ray.init()
         self.config = config
         self.env = env
@@ -27,7 +26,7 @@ class CustomExperiment():
         # list of lists: one list per checkpoint; each checkpoint list contains 1st the path, 2nd the metric value
         checkpoints = analysis.get_trial_checkpoints_paths(trial=analysis.get_best_trial('episode_reward_mean'),
                                                            metric='episode_reward_mean')
-        # retriev the checkpoint path; we only have a single checkpoint, so take the first one
+        # retrieve the checkpoint path; we only have a single checkpoint, so take the first one
         checkpoint_path = checkpoints[0][0]
         return checkpoint_path, analysis
 
@@ -40,6 +39,10 @@ class CustomExperiment():
         self.agent.restore(path)
 
     def test(self):
+        """
+        Test a trained RLlib agent.
+        :return: Return the mean reward obtained by the agent on the test set
+        """
         env = create_env(self.config["env_config"])
         episode_reward = np.array([0])
         done = False

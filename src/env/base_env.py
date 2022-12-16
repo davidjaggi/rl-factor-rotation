@@ -34,6 +34,7 @@ class BaseEnv(gym.Env, ABC):
 
         self.reward_scaling = self.config['agent']["reward_scaling"]
         self.obs_price_hist = self.config['agent']["obs_price_hist"]
+        self.observation_space = self.build_observation_space()
 
         self._seed()
 
@@ -63,7 +64,7 @@ class BaseEnv(gym.Env, ABC):
         self.state = self.build_observation()
         # add one day
         self.day += 1
-        # return self.state
+        return self.state
 
     def build_observation(self):
 
@@ -182,12 +183,13 @@ class BaseEnv(gym.Env, ABC):
 
     def build_observation_space(self):
         """Builds the observation space"""
+        n_assets = len(self.config["rl_portfolio"]["investment_universe"])
         return gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
             # TODO get the number of assets from the broker class
             shape=(
-                self.config["obs_price_hist"] * 2
+                self.obs_price_hist * n_assets
                 + 2
                 + 1,
             ),
