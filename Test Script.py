@@ -18,7 +18,7 @@ config = {
         'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
         'initial_balance': int(10000),
         'initial_weights': [0.25, 0.25, 0.25, 0.25],
-        'restrictions': dict(),
+        'restrictions': {"direction": "long_only"},
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'rl_portfolio': {
@@ -27,7 +27,7 @@ config = {
         'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
         'initial_balance': int(10000),
         'initial_weights': [0.25, 0.25, 0.25, 0.25],
-        'restrictions': dict(),
+        'restrictions': {"direction": "long_only"},
 
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
