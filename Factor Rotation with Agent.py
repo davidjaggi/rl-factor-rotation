@@ -7,7 +7,7 @@ from datetime import date
 import matplotlib.pyplot as plt
 import ray
 from ray.rllib.agents.ppo import PPOTrainer
-from ray.rllib.utils.framework import try_import_tf,
+from ray.rllib.utils.framework import try_import_tf
 from ray.rllib.utils.test_utils import check_learning_achieved
 from ray.tune.registry import register_env
 
@@ -80,6 +80,11 @@ config = {
 register_env("base_env", create_env)
 # %%
 env = create_env(config["env_config"])
+sampled_action = env.action_space.sample()
+sampled_observation = env.observation_space.sample()
+reset_obs = env.reset()
+# %%
+
 # todo fix the shape of the observation space
 ray.rllib.utils.check_env(env)
 # %%
