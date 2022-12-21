@@ -28,6 +28,7 @@ config = {
         'initial_balance': int(10000),
         'initial_weights': [0.25, 0.25, 0.25, 0.25],
         'restrictions': dict(),
+
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'broker': {
