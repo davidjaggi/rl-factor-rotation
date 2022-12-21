@@ -69,6 +69,4 @@ analyzer.get_prices()
 # %%
 analyzer.get_cash("rl")
 # %%
-analyzer.get_reward()
-# %%
-analyzer.plot_reward()
+analyzer.get_rewards()
