@@ -15,25 +15,26 @@ config = {
     'benchmark_portfolio': {
         'name': 'benchmark_portfolio',
         'rebalancing_type': "equally_weighted",
-        'investment_universe': ["GOOGL.O", "AAPL.O"],
+        'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
         'initial_balance': int(10000),
-        'initial_weights': [0.5, 0.5],
-        'restrictions': {"direction": "long_only"},
+        'initial_weights': [0.25, 0.25, 0.25, 0.25],
+        'restrictions': dict(),
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'rl_portfolio': {
         'name': 'rl_portfolio',
         'rebalancing_type': None,
-        'investment_universe': ["GOOGL.O", "AAPL.O"],
+        'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
         'initial_balance': int(10000),
-        'initial_weights': [0.5, 0.5],
-        'restrictions': {"direction": "long_only"},
+        'initial_weights': [0.25, 0.25, 0.25, 0.25],
+        'restrictions': dict(),
+
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'broker': {
         "rl_portfolio": None,
         "benchmark_portfolio": None,
-        "start_date": date(2018, 12, 31),
+        "start_date": date(2010, 12, 31),
         "end_date": date(2020, 12, 31),
         "busday_offset_start": 250,
         "transaction_cost": 0.05
@@ -50,9 +51,9 @@ config['broker']['benchmark_portfolio'] = BenchmarkPortfolio(config['benchmark_p
 
 # random.seed(1)
 feed = CSVDataFeed(
-    DATA_PATH + "/example_data.csv"
+    DATA_PATH + "/example_factor_clean.csv",
 )
-env = BaseEnv(config=config, data_feed=feed, indicator_pipeline=[])
+env = BaseEnv(config=config, data_feed=feed)
 
 env.reset()
 done = False

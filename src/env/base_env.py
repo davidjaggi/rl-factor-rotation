@@ -34,6 +34,7 @@ class BaseEnv(gym.Env, ABC):
 
         self.reward_scaling = self.config['agent']["reward_scaling"]
         self.obs_price_hist = self.config['agent']["obs_price_hist"]
+        self.observation_space = self.build_observation_space()
 
         self._seed()
 
@@ -63,11 +64,12 @@ class BaseEnv(gym.Env, ABC):
         self.state = self.build_observation()
         # add one day
         self.day += 1
-        # return self.state
+        return self.state
 
     def build_observation(self):
 
         prices = self.data_feed.get_observations(self.day, offset=self.obs_price_hist)
+        current_price = self.data_feed.get_prices_snapshot(self.day)
         # create observation space with prices and indicators
         obs = prices
         if self.indicator_pipeline is not None:
@@ -76,8 +78,15 @@ class BaseEnv(gym.Env, ABC):
                 for indicator in self.indicator_pipeline.indicators:
                     inds = indicator.calc()
                     obs = np.append(obs, inds, axis=0)
-        # obs = np.append(obs, self.current_holdings)  # attach current holdings # TODO add current holdings
-        # obs = np.append(obs, self.asset_memory[-1])  # attach last portfolio value # TODO add last portfolio value
+        obs = np.concatenate(obs, axis=0)
+        values, weights = self.broker.get_portfolio_value_and_weights(self.rl_portfolio, current_price)
+        current_weights = [weights[asset] for asset in weights.keys() if asset != "total_value"]
+        current_values = values["total_value"]
+        obs = np.append(obs, current_weights)  # attach current holdings # TODO add current holdings
+        obs = np.append(obs, current_values)  # attach last portfolio value # TODO add last portfolio value
+        # return obs as array
+        # list of arrays to single array
+
         return obs
 
     def step(self, actions):
@@ -182,15 +191,12 @@ class BaseEnv(gym.Env, ABC):
 
     def build_observation_space(self):
         """Builds the observation space"""
+        n_assets = len(self.config["rl_portfolio"]["investment_universe"])
         return gym.spaces.Box(
             low=-np.inf,
             high=np.inf,
             # TODO get the number of assets from the broker class
-            shape=(
-                self.config["obs_price_hist"] * 2
-                + 2
-                + 1,
-            ),
+            shape=(self.obs_price_hist * n_assets + n_assets + 1,),
             dtype=np.float64
         )
 

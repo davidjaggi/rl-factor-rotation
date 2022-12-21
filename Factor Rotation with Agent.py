@@ -2,53 +2,91 @@
 # TODO implement a custom experiment class
 # https://github.com/ray-project/ray/issues/9220#issue-648483764
 # %%
+from datetime import date
+
 import matplotlib.pyplot as plt
-import numpy as np
+import ray
 from ray.rllib.agents.ppo import PPOTrainer
+from ray.rllib.utils.framework import try_import_tf
+from ray.rllib.utils.test_utils import check_learning_achieved
 from ray.tune.registry import register_env
 
 from src.data.feed import CSVDataFeed
 from src.data.rebalancing_schedule import PeriodicSchedule
 from src.env.create_env import create_env
+from src.env.portfolio import BenchmarkPortfolio, RLPortfolio
 from src.experiment.custom_experiment import CustomExperiment
 from src.utils.load_path import load_data_path
 
 # %%
-data_path = load_data_path()
-feed = CSVDataFeed(file_name=data_path + "/example_data.csv")
+try_import_tf()
 
+# %%
+ray.shutdown()
+data_path = load_data_path()
+feed = CSVDataFeed(file_name=data_path + "/example_factor_clean.csv")
 ENV_CONFIG = {
-    "initial_balance": 10000,
-    "initial_weights": np.array([0.5, 0.5]),
-    "benchmark_type": "custom",
-    "benchmark_wgts": np.array([0.5, 0.5]),
-    "start_date": "2015-12-31",
-    "end_date": "2020-12-31",
-    "busday_offset_start": 250,
-    "cost_pct": 0.0005,
-    "reward_scaling": 1,
-    "obs_price_hist": 5,
+    'benchmark_portfolio': {
+        'name': 'benchmark_portfolio',
+        'rebalancing_type': "equally_weighted",
+        'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
+        'initial_balance': int(10000),
+        'initial_weights': [0.25, 0.25, 0.25, 0.25],
+        'restrictions': dict(),
+        'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
+    },
+    'rl_portfolio': {
+        'name': 'rl_portfolio',
+        'rebalancing_type': None,
+        'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
+        'initial_balance': int(10000),
+        'initial_weights': [0.25, 0.25, 0.25, 0.25],
+        'restrictions': dict(),
+        'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
+    },
+    'broker': {
+        "rl_portfolio": None,
+        "benchmark_portfolio": None,
+        "start_date": date(2010, 12, 31),
+        "end_date": date(2020, 12, 31),
+        "busday_offset_start": 250,
+        "transaction_cost": 0.05
+    },
+    'agent': {
+        "reward_scaling": int(1),
+        "obs_price_hist": int(250),
+    },
+    "disable_env_checking": False,
 }
+
+ENV_CONFIG['broker']['rl_portfolio'] = RLPortfolio(ENV_CONFIG['rl_portfolio'])
+ENV_CONFIG['broker']['benchmark_portfolio'] = BenchmarkPortfolio(ENV_CONFIG['benchmark_portfolio'])
 
 # now try a different rebalancing frequency...
 schedule = PeriodicSchedule(frequency="WOM-3FRI")
 
-env_config = {
-    "data_feed": feed,
-    "config": ENV_CONFIG,
-    "rebalance_schedule": schedule,
-}
-
 # %%
-# register the environment
-register_env("base_env", create_env)
-
 config = {
     "env": "base_env",
-    "env_config": env_config,
-    "num_workers": 2,
-    "num_gpus": 0}
+    "env_config": {
+        "data_feed": feed,
+        "config": ENV_CONFIG,
+    },
+    "num_workers": 1,
+    "num_gpus": 0,
+    "log_level": "INFO",
+}
 
+register_env("base_env", create_env)
+# %%
+env = create_env(config["env_config"])
+sampled_action = env.action_space.sample()
+sampled_observation = env.observation_space.sample()
+reset_obs = env.reset()
+# %%
+
+# todo fix the shape of the observation space
+ray.rllib.utils.check_env(env)
 # %%
 experiment = CustomExperiment(
     config=config,
@@ -59,6 +97,9 @@ experiment = CustomExperiment(
 # %%
 # first we train the agent
 experiment.train(stop_criteria={"timesteps_total": 10000})
+# %%
+# check if the agent learned something
+check_learning_achieved(experiment.results, 0.5)
 # %%
 # load the trained agent
 experiment.load(
