@@ -19,9 +19,6 @@ from src.experiment.custom_experiment import CustomExperiment
 from src.utils.load_path import load_data_path
 
 # %%
-try_import_tf()
-
-# %%
 ray.shutdown()
 data_path = load_data_path()
 feed = CSVDataFeed(file_name=data_path + "/example_factor_clean.csv")
@@ -32,7 +29,7 @@ ENV_CONFIG = {
         'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
         'initial_balance': int(10000),
         'initial_weights': [0.25, 0.25, 0.25, 0.25],
-        'restrictions': dict(),
+        'restrictions': {"direction": "long_only"},
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'rl_portfolio': {
@@ -41,13 +38,13 @@ ENV_CONFIG = {
         'investment_universe': ["MKT_Index", "SMB_Index", 'HML_Index', 'RF_Index'],
         'initial_balance': int(10000),
         'initial_weights': [0.25, 0.25, 0.25, 0.25],
-        'restrictions': dict(),
+        'restrictions': {"direction": "long_only"},
         'rebalancing_schedule': PeriodicSchedule(frequency="WOM-3FRI")
     },
     'broker': {
         "rl_portfolio": None,
         "benchmark_portfolio": None,
-        "start_date": date(2010, 12, 31),
+        "start_date": date(2000, 12, 31),
         "end_date": date(2020, 12, 31),
         "busday_offset_start": 250,
         "transaction_cost": 0.05
@@ -84,8 +81,6 @@ sampled_action = env.action_space.sample()
 sampled_observation = env.observation_space.sample()
 reset_obs = env.reset()
 # %%
-
-# todo fix the shape of the observation space
 ray.rllib.utils.check_env(env)
 # %%
 experiment = CustomExperiment(
@@ -96,7 +91,7 @@ experiment = CustomExperiment(
 
 # %%
 # first we train the agent
-experiment.train(stop_criteria={"timesteps_total": 10000})
+experiment.train(stop_criteria={"training_iteration": 1})
 # %%
 # check if the agent learned something
 check_learning_achieved(experiment.results, 0.5)

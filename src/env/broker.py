@@ -12,7 +12,7 @@ class Broker(ABC):
         self.data_feed = data_feed
         self.config = config  # TODO: This makes it so that we store the portfolios twice, once in the config and again in the Broker, I suggest we delete it.
         self.transaction_cost = self.config['transaction_cost']
-        self.start_date = self.config['start_date']
+        self.start_date, self.day = self.data_feed.get_start_date(self.config["start_date"])
         self.hist_dict = self._create_hist_dict()
         self.trade_logs = self._create_trade_logs()
 

@@ -112,6 +112,17 @@ class CSVDataFeed(Feed):
         )
         return prices
 
+    def get_start_date(self, date):
+        # get closest date to input date
+        close_date = self._get_closest_date(date)
+        close_index = self.dates.index(close_date)
+        return close_date, close_index
+
+    def _get_closest_date(self, date):
+        dt = pd.to_datetime(date)
+        # return the date closest to the input date
+        return min(self.dates, key=lambda x: abs(x - dt))
+
     def get_data(self, end_dt, start_dt=None, fields=None, offset=None):
         """returns data for all assets for given fields
         NOTE: Currently, only one field is allowed so that data can be returned in one DataFrame
@@ -176,7 +187,6 @@ class CSVDataFeed(Feed):
     def get_idx(self, date):
         dt = pd.to_datetime(date)
         return self.dates.index(dt)
-
     def get_date(self, idx):
         return self.dates[idx]
 

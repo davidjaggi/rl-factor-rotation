@@ -44,8 +44,7 @@ class BaseEnv(gym.Env, ABC):
         self.done = False
 
         # initialize reward
-        self.date = self.config["broker"]["start_date"]
-        self.day = self.data_feed.get_idx(self.date)
+        self.date, self.day = self.data_feed.get_start_date(self.config["broker"]["start_date"])
         self.reward = 0
         self.cost = 0
         self.trades = 0
@@ -108,10 +107,11 @@ class BaseEnv(gym.Env, ABC):
 
         # state: s -> s+1
         self.day += 1
-        self.state = self.build_observation()
         self.done = self.day >= len(self.data_feed.dates) - 1
+        if not self.done:
+            self.state = self.build_observation()
 
-        #self.plot = Plot(self.hist_dict)
+        # self.plot = Plot(self.hist_dict)
 
         return self.state, self.reward, self.done, {}
 

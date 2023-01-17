@@ -34,7 +34,7 @@ config = {
     'broker': {
         "rl_portfolio": None,
         "benchmark_portfolio": None,
-        "start_date": date(2010, 12, 31),
+        "start_date": date(2000, 12, 31),
         "end_date": date(2020, 12, 31),
         "busday_offset_start": 250,
         "transaction_cost": 0.05
